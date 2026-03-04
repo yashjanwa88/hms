@@ -1,0 +1,469 @@
+version: '3.8'
+
+services:
+  # =====================================================
+  # INFRASTRUCTURE SERVICES
+  # =====================================================
+  
+  postgres-identity:
+    image: postgres:16-alpine
+    container_name: postgres-identity
+    environment:
+      POSTGRES_DB: identity_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-identity-data:/var/lib/postgresql/data
+      - ./src/IdentityService/scripts:/docker-entrypoint-initdb.d
+    networks:
+      - hospital-network
+
+  postgres-tenant:
+    image: postgres:16-alpine
+    container_name: postgres-tenant
+    environment:
+      POSTGRES_DB: tenant_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-tenant-data:/var/lib/postgresql/data
+    networks:
+      - hospital-network
+
+  postgres-patient:
+    image: postgres:16-alpine
+    container_name: postgres-patient
+    environment:
+      POSTGRES_DB: patient_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-patient-data:/var/lib/postgresql/data
+      - ./src/PatientService/scripts:/docker-entrypoint-initdb.d
+    networks:
+      - hospital-network
+
+  postgres-appointment:
+    image: postgres:16-alpine
+    container_name: postgres-appointment
+    environment:
+      POSTGRES_DB: appointment_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-appointment-data:/var/lib/postgresql/data
+      - ./src/AppointmentService/scripts:/docker-entrypoint-initdb.d
+    networks:
+      - hospital-network
+
+  postgres-encounter:
+    image: postgres:16-alpine
+    container_name: postgres-encounter
+    environment:
+      POSTGRES_DB: encounter_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres-encounter-data:/var/lib/postgresql/data
+      - ./src/EncounterService/scripts:/docker-entrypoint-initdb.d
+    networks:
+      - hospital-network
+
+  postgres-billing:
+    image: postgres:16-alpine
+    container_name: postgres-billing
+    environment:
+      POSTGRES_DB: billing_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5440:5432"
+    volumes:
+      - postgres-billing-data:/var/lib/postgresql/data
+      - ./src/BillingService/scripts:/docker-entrypoint-initdb.d
+    networks:
+      - hospital-network
+
+  postgres-insurance:
+    image: postgres:16-alpine
+    container_name: postgres-insurance
+    environment:
+      POSTGRES_DB: insurance_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5441:5432"
+    volumes:
+      - postgres-insurance-data:/var/lib/postgresql/data
+      - ./src/InsuranceService/scripts:/docker-entrypoint-initdb.d
+    networks:
+      - hospital-network
+
+  postgres-pharmacy:
+    image: postgres:16-alpine
+    container_name: postgres-pharmacy
+    environment:
+      POSTGRES_DB: pharmacy_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres-pharmacy-data:/var/lib/postgresql/data
+    networks:
+      - hospital-network
+
+  postgres-laboratory:
+    image: postgres:16-alpine
+    container_name: postgres-laboratory
+    environment:
+      POSTGRES_DB: laboratory_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5438:5432"
+    volumes:
+      - postgres-laboratory-data:/var/lib/postgresql/data
+    networks:
+      - hospital-network
+
+  postgres-doctor:
+    image: postgres:16-alpine
+    container_name: postgres-doctor
+    environment:
+      POSTGRES_DB: doctor_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5439:5432"
+    volumes:
+      - postgres-doctor-data:/var/lib/postgresql/data
+      - ./src/DoctorService/scripts:/docker-entrypoint-initdb.d
+    networks:
+      - hospital-network
+
+  postgres-emr:
+    image: postgres:16-alpine
+    container_name: postgres-emr
+    environment:
+      POSTGRES_DB: emr_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5442:5432"
+    volumes:
+      - postgres-emr-data:/var/lib/postgresql/data
+      - ./src/EMRService/scripts:/docker-entrypoint-initdb.d
+    networks:
+      - hospital-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - hospital-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - hospital-network
+
+  # =====================================================
+  # MICROSERVICES
+  # =====================================================
+
+  identity-service:
+    build:
+      context: ./src/IdentityService
+      dockerfile: Dockerfile
+    container_name: identity-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-identity;Port=5432;Database=identity_db;Username=postgres;Password=postgres
+      - JwtSettings__SecretKey=YourSuperSecretKeyForJWTTokenGeneration12345678
+      - RabbitMQ__HostName=rabbitmq
+    ports:
+      - "5001:80"
+    depends_on:
+      - postgres-identity
+      - rabbitmq
+      - redis
+    networks:
+      - hospital-network
+
+  tenant-service:
+    build:
+      context: ./src/TenantService
+      dockerfile: Dockerfile
+    container_name: tenant-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-tenant;Port=5432;Database=tenant_db;Username=postgres;Password=postgres
+      - RabbitMQ__HostName=rabbitmq
+    ports:
+      - "5002:80"
+    depends_on:
+      - postgres-tenant
+      - rabbitmq
+    networks:
+      - hospital-network
+
+  patient-service:
+    build:
+      context: ./src/PatientService
+      dockerfile: Dockerfile
+    container_name: patient-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-patient;Port=5432;Database=patient_db;Username=postgres;Password=postgres
+      - JwtSettings__SecretKey=YourSuperSecretKeyForJWTTokenGeneration12345678
+      - RabbitMQ__HostName=rabbitmq
+      - Redis__ConnectionString=redis:6379
+    ports:
+      - "5003:80"
+    depends_on:
+      - postgres-patient
+      - rabbitmq
+      - redis
+    networks:
+      - hospital-network
+
+  appointment-service:
+    build:
+      context: ./src/AppointmentService
+      dockerfile: Dockerfile
+    container_name: appointment-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-appointment;Port=5432;Database=appointment_db;Username=postgres;Password=postgres
+      - JwtSettings__SecretKey=YourSuperSecretKeyForJWTTokenGeneration12345678
+      - RabbitMQ__HostName=rabbitmq
+      - Redis__ConnectionString=redis:6379
+      - Services__DoctorService=http://doctor-service:80
+      - Services__PatientService=http://patient-service:80
+    ports:
+      - "5004:80"
+    depends_on:
+      - postgres-appointment
+      - rabbitmq
+      - redis
+      - doctor-service
+      - patient-service
+    networks:
+      - hospital-network
+
+  billing-service:
+    build:
+      context: ./src/BillingService
+      dockerfile: Dockerfile
+    container_name: billing-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-billing;Port=5432;Database=billing_db;Username=postgres;Password=postgres
+      - Jwt__Secret=YourSuperSecretKeyForJWTTokenGenerationMinimum32Characters!@#
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin
+      - Redis__ConnectionString=redis:6379
+      - ServiceUrls__PatientService=http://patient-service:80
+    ports:
+      - "5010:80"
+    depends_on:
+      - postgres-billing
+      - rabbitmq
+      - redis
+      - patient-service
+    networks:
+      - hospital-network
+
+  pharmacy-service:
+    build:
+      context: ./src/PharmacyService
+      dockerfile: Dockerfile
+    container_name: pharmacy-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-pharmacy;Port=5432;Database=pharmacy_db;Username=postgres;Password=postgres
+      - RabbitMQ__HostName=rabbitmq
+    ports:
+      - "5006:80"
+    depends_on:
+      - postgres-pharmacy
+      - rabbitmq
+    networks:
+      - hospital-network
+
+  laboratory-service:
+    build:
+      context: ./src/LaboratoryService
+      dockerfile: Dockerfile
+    container_name: laboratory-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-laboratory;Port=5432;Database=laboratory_db;Username=postgres;Password=postgres
+      - RabbitMQ__HostName=rabbitmq
+    ports:
+      - "5007:80"
+    depends_on:
+      - postgres-laboratory
+      - rabbitmq
+    networks:
+      - hospital-network
+
+  doctor-service:
+    build:
+      context: ./src/DoctorService
+      dockerfile: Dockerfile
+    container_name: doctor-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-doctor;Port=5432;Database=doctor_db;Username=postgres;Password=postgres
+      - JwtSettings__SecretKey=YourSuperSecretKeyForJWTTokenGeneration12345678
+      - RabbitMQ__HostName=rabbitmq
+      - Redis__ConnectionString=redis:6379
+    ports:
+      - "5008:80"
+    depends_on:
+      - postgres-doctor
+      - rabbitmq
+      - redis
+    networks:
+      - hospital-network
+
+  encounter-service:
+    build:
+      context: ./src/EncounterService
+      dockerfile: Dockerfile
+    container_name: encounter-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-encounter;Port=5432;Database=encounter_db;Username=postgres;Password=postgres
+      - Jwt__Secret=YourSuperSecretKeyForJWTTokenGenerationMinimum32Characters!@#
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin
+      - Redis__ConnectionString=redis:6379
+      - ServiceUrls__AppointmentService=http://appointment-service:80
+      - ServiceUrls__DoctorService=http://doctor-service:80
+      - ServiceUrls__PatientService=http://patient-service:80
+    ports:
+      - "5009:80"
+    depends_on:
+      - postgres-encounter
+      - rabbitmq
+      - redis
+      - appointment-service
+      - doctor-service
+      - patient-service
+    networks:
+      - hospital-network
+
+  insurance-service:
+    build:
+      context: ./src/InsuranceService
+      dockerfile: Dockerfile
+    container_name: insurance-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-insurance;Port=5432;Database=insurance_db;Username=postgres;Password=postgres
+      - Jwt__Secret=YourSuperSecretKeyForJWTTokenGenerationMinimum32Characters!@#
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin
+      - Redis__ConnectionString=redis:6379
+      - ServiceUrls__PatientService=http://patient-service:80
+    ports:
+      - "5011:80"
+    depends_on:
+      - postgres-insurance
+      - rabbitmq
+      - redis
+      - patient-service
+    networks:
+      - hospital-network
+
+  emr-service:
+    build:
+      context: ./src/EMRService
+      dockerfile: Dockerfile
+    container_name: emr-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__EMRDatabase=Host=postgres-emr;Port=5432;Database=emr_db;Username=postgres;Password=postgres
+      - ConnectionStrings__Redis=redis:6379
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin
+      - Jwt__Key=YourSuperSecretKeyForJWTTokenGeneration123!
+      - Jwt__Issuer=DigitalHospital
+      - Jwt__Audience=DigitalHospital
+    ports:
+      - "5012:5008"
+    depends_on:
+      - postgres-emr
+      - rabbitmq
+      - redis
+    networks:
+      - hospital-network
+
+  # api-gateway:
+  #   build:
+  #     context: ./src/ApiGateway
+  #     dockerfile: Dockerfile
+  #   container_name: api-gateway
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #   ports:
+  #     - "5000:80"
+  #   depends_on:
+  #     - identity-service
+  #     - tenant-service
+  #     - patient-service
+  #   networks:
+  #     - hospital-network
+
+networks:
+  hospital-network:
+    driver: bridge
+
+volumes:
+  postgres-identity-data:
+  postgres-tenant-data:
+  postgres-patient-data:
+  postgres-appointment-data:
+  postgres-encounter-data:
+  postgres-billing-data:
+  postgres-insurance-data:
+  postgres-pharmacy-data:
+  postgres-laboratory-data:
+  postgres-doctor-data:
+  postgres-emr-data:
+  rabbitmq-data:
+  redis-data:

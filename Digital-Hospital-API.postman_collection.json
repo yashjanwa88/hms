@@ -1,0 +1,120 @@
+{
+  "info": {
+    "name": "Digital Hospital API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Identity Service",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@hospital.com\",\n  \"password\": \"Admin@123\",\n  \"firstName\": \"Admin\",\n  \"lastName\": \"User\",\n  \"roleId\": \"00000000-0000-0000-0000-000000000001\",\n  \"tenantId\": \"00000000-0000-0000-0000-000000000001\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/identity/v1/auth/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["api", "identity", "v1", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "00000000-0000-0000-0000-000000000001"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@hospital.com\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/identity/v1/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["api", "identity", "v1", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "EMR Service",
+      "item": [
+        {
+          "name": "Create Encounter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "00000000-0000-0000-0000-000000000001"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "X-Tenant-Code",
+                "value": "HOSP01"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"00000000-0000-0000-0000-000000000001\",\n  \"doctorId\": \"00000000-0000-0000-0000-000000000001\",\n  \"encounterType\": \"OPD\",\n  \"encounterDate\": \"2024-01-15T10:00:00Z\",\n  \"chiefComplaint\": \"Fever and cough\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5012/api/emr/encounters",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5012",
+              "path": ["api", "emr", "encounters"]
+            }
+          }
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5012/api/emr/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5012",
+              "path": ["api", "emr", "health"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
