@@ -87,7 +87,7 @@ public class PatientRepository : BaseRepository<Patient>, IPatientRepository
         return rows > 0;
     }
 
-    public async Task<Patient?> GetByIdAsync(Guid id, Guid tenantId)
+    public override async Task<Patient?> GetByIdAsync(Guid id, Guid tenantId)
     {
         using var connection = CreateConnection();
         var sql = @"SELECT 

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { patientService } from '../services/patientService';
 import { encounterService } from '@/features/encounters/services/encounterService';
 import { billingService } from '@/features/billing/services/billingService';
+import { PatientVisitHistory } from '../components/PatientVisitHistory';
 import { ArrowLeft, User, Phone, Mail, MapPin, Calendar, Activity, Edit, DollarSign } from 'lucide-react';
 
 export function PatientProfilePage() {
@@ -186,6 +187,8 @@ export function PatientProfilePage() {
           </div>
         </CardContent>
       </Card>
+
+      <PatientVisitHistory patientId={id!} />
 
       <Card>
         <CardHeader>

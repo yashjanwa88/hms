@@ -12,7 +12,7 @@ import {
   FileSearch,
   Calendar,
   Stethoscope,
-  TrendingUp
+  Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDispatch } from 'react-redux';
@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Patients', href: '/patients', icon: Users },
+  { name: 'Visits', href: '/visits', icon: Activity },
   { name: 'Doctors', href: '/doctors', icon: Stethoscope },
   { name: 'Appointments', href: '/appointments', icon: Calendar },
   { name: 'EMR', href: '/emr', icon: FileText },

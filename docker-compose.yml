@@ -167,6 +167,21 @@ services:
     networks:
       - hospital-network
 
+  postgres-visit:
+    image: postgres:16-alpine
+    container_name: postgres-visit
+    environment:
+      POSTGRES_DB: visit_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5443:5432"
+    volumes:
+      - postgres-visit-data:/var/lib/postgresql/data
+      - ./src/VisitService/scripts:/docker-entrypoint-initdb.d
+    networks:
+      - hospital-network
+
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: rabbitmq
@@ -433,6 +448,30 @@ services:
     networks:
       - hospital-network
 
+  visit-service:
+    build:
+      context: ./src/VisitService
+      dockerfile: Dockerfile
+    container_name: visit-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-visit;Port=5432;Database=visit_db;Username=postgres;Password=postgres
+      - JwtSettings__SecretKey=YourSuperSecretKeyForJWTTokenGeneration12345678
+      - RabbitMQ__ConnectionString=amqp://admin:admin@rabbitmq:5672
+      - Redis__ConnectionString=redis:6379
+      - ServiceUrls__PatientService=http://patient-service:80
+      - ServiceUrls__DoctorService=http://doctor-service:80
+    ports:
+      - "5013:5008"
+    depends_on:
+      - postgres-visit
+      - rabbitmq
+      - redis
+      - patient-service
+      - doctor-service
+    networks:
+      - hospital-network
+
   # api-gateway:
   #   build:
   #     context: ./src/ApiGateway
@@ -465,5 +504,6 @@ volumes:
   postgres-laboratory-data:
   postgres-doctor-data:
   postgres-emr-data:
+  postgres-visit-data:
   rabbitmq-data:
   redis-data:

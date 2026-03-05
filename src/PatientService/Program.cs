@@ -3,12 +3,15 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PatientService.Application;
 using PatientService.Repositories;
+using PatientService.Middleware;
 using Serilog;
 using Shared.Common.Middleware;
 using Shared.EventBus;
 using Shared.EventBus.Interfaces;
 using StackExchange.Redis;
 using System.Text;
+using System.Diagnostics;
+using Microsoft.Extensions.Caching.Distributed;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,18 +62,27 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// Redis (Optional)
+// Redis Cache
 var redisConnection = builder.Configuration["Redis:ConnectionString"];
 if (!string.IsNullOrEmpty(redisConnection))
 {
     try
     {
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = redisConnection;
+        });
         builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnection));
     }
     catch (Exception ex)
     {
         Log.Warning("Redis connection failed: {Message}. Continuing without Redis.", ex.Message);
+        builder.Services.AddMemoryCache(); // Fallback to in-memory cache
     }
+}
+else
+{
+    builder.Services.AddMemoryCache();
 }
 
 // RabbitMQ (Optional)
@@ -92,13 +104,16 @@ else
     builder.Services.AddSingleton<IEventBus>(new NoOpEventBus());
 }
 
-// Repositories
+// Repositories - Create new connection per request
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
-builder.Services.AddScoped<IPatientRepository>(sp => new PatientRepository(connectionString));
+builder.Services.AddScoped<IPatientRepository>(provider => 
+    new PatientRepository(connectionString));
 builder.Services.AddScoped<IInsuranceProviderRepository>(sp => new InsuranceProviderRepository(connectionString));
+builder.Services.AddScoped<IPatientRegistrationRepository>(sp => new PatientRegistrationRepository(connectionString));
 
-// Services
+// Services - Use standard service
 builder.Services.AddScoped<IPatientService, PatientAppService>();
+builder.Services.AddScoped<IPatientRegistrationService, PatientRegistrationService>();
 builder.Services.AddScoped<Shared.Common.Services.IAuditClient, Shared.Common.Services.AuditClient>();
 builder.Services.AddScoped<Shared.Common.Authorization.IPermissionService, Shared.Common.Services.PermissionService>();
 builder.Services.AddScoped<Shared.Common.Services.IDatabaseMigrationService>(sp =>
@@ -127,6 +142,7 @@ using (var scope = app.Services.CreateScope())
     await migrationService.RunMigrationsAsync();
 }
 
+app.UseMiddleware<PerformanceMonitoringMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<RequestTrackingMiddleware>();
 

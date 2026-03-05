@@ -8,7 +8,7 @@ using Shared.Common.Authorization;
 namespace PatientService.Controllers;
 
 [ApiController]
-[Route("api/patients")]
+[Route("api/patients-legacy")]
 [Authorize]
 public class PatientController : ControllerBase
 {
@@ -98,7 +98,7 @@ public class PatientController : ControllerBase
             if (!result)
                 return NotFound(ApiResponse<object>.ErrorResponse("Patient not found"));
 
-            return Ok(ApiResponse<object>.SuccessResponse(null, "Patient updated successfully"));
+            return Ok(ApiResponse<object>.SuccessResponse(new object(), "Patient updated successfully"));
         }
         catch (Exception ex)
         {
@@ -139,7 +139,7 @@ public class PatientController : ControllerBase
             if (!result)
                 return NotFound(ApiResponse<object>.ErrorResponse("Patient not found"));
 
-            return Ok(ApiResponse<object>.SuccessResponse(null, "Patient deactivated successfully"));
+            return Ok(ApiResponse<object>.SuccessResponse(new object(), "Patient deactivated successfully"));
         }
         catch (Exception ex)
         {
@@ -187,7 +187,7 @@ public class PatientController : ControllerBase
             if (!result)
                 return BadRequest(ApiResponse<object>.ErrorResponse("Failed to merge patients"));
 
-            return Ok(ApiResponse<object>.SuccessResponse(null, "Patients merged successfully"));
+            return Ok(ApiResponse<object>.SuccessResponse(new object(), "Patients merged successfully"));
         }
         catch (Exception ex)
         {
@@ -226,7 +226,7 @@ public class PatientController : ControllerBase
             if (!result)
                 return NotFound(ApiResponse<object>.ErrorResponse("Patient not found"));
 
-            return Ok(ApiResponse<object>.SuccessResponse(null, "Visit count incremented"));
+            return Ok(ApiResponse<object>.SuccessResponse(new object(), "Visit count incremented"));
         }
         catch (Exception ex)
         {

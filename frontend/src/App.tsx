@@ -17,6 +17,8 @@ import { PatientsPage } from './features/patients/pages/PatientsPage';
 import { PatientProfilePage } from './features/patients/pages/PatientProfilePage';
 import { EditPatientPage } from './features/patients/pages/EditPatientPage';
 import { PatientHistoryPage } from './features/patients/pages/PatientHistoryPage';
+import { VisitsPage } from './features/visits/pages/VisitsPage';
+import { VisitDetailPage } from './features/visits/pages/VisitDetailPage';
 import { CreateEncounterPage } from './features/encounters/pages/CreateEncounterPage';
 import { InvoiceDetailPage } from './features/billing/pages/InvoiceDetailPage';
 import { ARAgingReportPage } from './features/billing/pages/ARAgingReportPage';
@@ -72,6 +74,8 @@ function App() {
               <Route path="patients/:id" element={<PatientProfilePage />} />
               <Route path="patients/:id/edit" element={<EditPatientPage />} />
               <Route path="patients/:id/history" element={<PatientHistoryPage />} />
+              <Route path="visits" element={<VisitsPage />} />
+              <Route path="visits/:id" element={<VisitDetailPage />} />
               <Route path="encounters/create" element={<CreateEncounterPage />} />
               <Route path="billing/invoices/:id" element={<InvoiceDetailPage />} />
               <Route path="audit" element={<AuditLogsPage />} />
