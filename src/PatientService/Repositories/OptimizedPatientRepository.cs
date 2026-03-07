@@ -476,4 +476,47 @@ public class OptimizedPatientRepository : BaseRepository<Patient>, IPatientRepos
             _logger.LogError(ex, "Failed to log query performance");
         }
     }
+
+    public async Task<List<Patient>> QuickSearchAsync(string searchTerm, Guid tenantId, int maxResults)
+    {
+        using var connection = CreateConnection();
+        var sql = @"SELECT 
+            id, tenant_id, uhid, first_name, middle_name, last_name,
+            gender, date_of_birth, mobile_number
+            FROM patients 
+            WHERE tenant_id = @TenantId AND is_deleted = false
+                AND (
+                    uhid ILIKE @SearchTerm
+                    OR first_name ILIKE @SearchTerm
+                    OR last_name ILIKE @SearchTerm
+                    OR mobile_number ILIKE @SearchTerm
+                    OR CONCAT(first_name, ' ', last_name) ILIKE @SearchTerm
+                )
+            ORDER BY registration_date DESC
+            LIMIT @MaxResults";
+        
+        var result = await connection.QueryAsync<Patient>(sql, new 
+        { 
+            TenantId = tenantId, 
+            SearchTerm = $"%{searchTerm}%", 
+            MaxResults = maxResults 
+        });
+        
+        return result.ToList();
+    }
+
+    public async Task<List<Patient>> GetRecentPatientsAsync(Guid tenantId, int limit)
+    {
+        using var connection = CreateConnection();
+        var sql = @"SELECT 
+            id, tenant_id, uhid, first_name, middle_name, last_name,
+            gender, date_of_birth, mobile_number
+            FROM patients 
+            WHERE tenant_id = @TenantId AND is_deleted = false
+            ORDER BY registration_date DESC
+            LIMIT @Limit";
+        
+        var result = await connection.QueryAsync<Patient>(sql, new { TenantId = tenantId, Limit = limit });
+        return result.ToList();
+    }
 }

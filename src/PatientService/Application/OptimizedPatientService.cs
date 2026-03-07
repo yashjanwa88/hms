@@ -277,6 +277,50 @@ public class OptimizedPatientService : IPatientService
         }
     }
 
+    public async Task<List<QuickSearchResponse>> QuickSearchAsync(QuickSearchRequest request, Guid tenantId)
+    {
+        try
+        {
+            var patients = await _patientRepository.QuickSearchAsync(request.SearchTerm, tenantId, request.MaxResults);
+            return patients.Select(p => new QuickSearchResponse
+            {
+                Id = p.Id,
+                UHID = p.UHID,
+                FullName = $"{p.FirstName} {p.MiddleName} {p.LastName}".Trim(),
+                MobileNumber = p.MobileNumber,
+                Age = p.Age,
+                Gender = p.Gender
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to perform quick search for tenant {TenantId}", tenantId);
+            throw;
+        }
+    }
+
+    public async Task<List<QuickSearchResponse>> GetRecentPatientsAsync(Guid tenantId, int limit)
+    {
+        try
+        {
+            var patients = await _patientRepository.GetRecentPatientsAsync(tenantId, limit);
+            return patients.Select(p => new QuickSearchResponse
+            {
+                Id = p.Id,
+                UHID = p.UHID,
+                FullName = $"{p.FirstName} {p.MiddleName} {p.LastName}".Trim(),
+                MobileNumber = p.MobileNumber,
+                Age = p.Age,
+                Gender = p.Gender
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get recent patients for tenant {TenantId}", tenantId);
+            throw;
+        }
+    }
+
     private static Patient MapToEntity(CreatePatientRequest request, Guid tenantId, string uhid, Guid userId)
     {
         return new Patient

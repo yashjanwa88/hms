@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { patientService } from '../services/patientService';
 import { QuickRegisterModal } from '../components/QuickRegisterModal';
+import { PatientSearch } from '../components/PatientSearch';
 import { Plus, X, Zap, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -283,6 +284,12 @@ export function PatientsPage() {
           <CardTitle>Patient List</CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+            <PatientSearch 
+              onPatientSelect={(patient) => navigate(`/patients/${patient.id}`)}
+              placeholder="Search patients by name, UHID, or phone..."
+            />
+          </div>
           {isLoading ? (
             <div>Loading...</div>
           ) : (

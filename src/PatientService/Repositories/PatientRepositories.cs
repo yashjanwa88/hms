@@ -19,6 +19,8 @@ public interface IPatientRepository
     Task<bool> MergePatientsAsync(Guid primaryId, Guid secondaryId, Guid tenantId, Guid mergedBy);
     Task<PatientStatsResponse> GetStatsAsync(Guid tenantId);
     Task<bool> IncrementVisitCountAsync(Guid patientId, Guid tenantId);
+    Task<List<Patient>> QuickSearchAsync(string searchTerm, Guid tenantId, int maxResults);
+    Task<List<Patient>> GetRecentPatientsAsync(Guid tenantId, int limit);
 }
 
 public class PatientRepository : BaseRepository<Patient>, IPatientRepository
@@ -366,6 +368,51 @@ public class PatientRepository : BaseRepository<Patient>, IPatientRepository
         var sql = "UPDATE patients SET visit_count = visit_count + 1 WHERE id = @PatientId AND tenant_id = @TenantId";
         var rows = await connection.ExecuteAsync(sql, new { PatientId = patientId, TenantId = tenantId });
         return rows > 0;
+    }
+
+    public async Task<List<Patient>> QuickSearchAsync(string searchTerm, Guid tenantId, int maxResults)
+    {
+        using var connection = CreateConnection();
+        var sql = @"SELECT 
+            id as Id, tenant_id as TenantId, uhid as UHID, 
+            first_name as FirstName, middle_name as MiddleName, last_name as LastName,
+            gender as Gender, date_of_birth as DateOfBirth, mobile_number as MobileNumber
+            FROM patients 
+            WHERE tenant_id = @TenantId AND is_deleted = false
+                AND (
+                    uhid ILIKE @SearchTerm
+                    OR first_name ILIKE @SearchTerm
+                    OR last_name ILIKE @SearchTerm
+                    OR mobile_number ILIKE @SearchTerm
+                    OR CONCAT(first_name, ' ', last_name) ILIKE @SearchTerm
+                )
+            ORDER BY registration_date DESC
+            LIMIT @MaxResults";
+        
+        var result = await connection.QueryAsync<Patient>(sql, new 
+        { 
+            TenantId = tenantId, 
+            SearchTerm = $"%{searchTerm}%", 
+            MaxResults = maxResults 
+        });
+        
+        return result.ToList();
+    }
+
+    public async Task<List<Patient>> GetRecentPatientsAsync(Guid tenantId, int limit)
+    {
+        using var connection = CreateConnection();
+        var sql = @"SELECT 
+            id as Id, tenant_id as TenantId, uhid as UHID, 
+            first_name as FirstName, middle_name as MiddleName, last_name as LastName,
+            gender as Gender, date_of_birth as DateOfBirth, mobile_number as MobileNumber
+            FROM patients 
+            WHERE tenant_id = @TenantId AND is_deleted = false
+            ORDER BY registration_date DESC
+            LIMIT @Limit";
+        
+        var result = await connection.QueryAsync<Patient>(sql, new { TenantId = tenantId, Limit = limit });
+        return result.ToList();
     }
 }
 

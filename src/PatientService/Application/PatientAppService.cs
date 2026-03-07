@@ -20,6 +20,8 @@ public interface IPatientService
     Task<bool> MergePatientsAsync(MergePatientRequest request, Guid tenantId, Guid mergedBy);
     Task<PatientStatsResponse> GetStatsAsync(Guid tenantId);
     Task<bool> IncrementVisitCountAsync(Guid id, Guid tenantId);
+    Task<List<QuickSearchResponse>> QuickSearchAsync(QuickSearchRequest request, Guid tenantId);
+    Task<List<QuickSearchResponse>> GetRecentPatientsAsync(Guid tenantId, int limit);
 }
 
 public class PatientAppService : IPatientService
@@ -299,6 +301,34 @@ public class PatientAppService : IPatientService
         }
 
         return result;
+    }
+
+    public async Task<List<QuickSearchResponse>> QuickSearchAsync(QuickSearchRequest request, Guid tenantId)
+    {
+        var patients = await _patientRepository.QuickSearchAsync(request.SearchTerm, tenantId, request.MaxResults);
+        return patients.Select(p => new QuickSearchResponse
+        {
+            Id = p.Id,
+            UHID = p.UHID,
+            FullName = $"{p.FirstName} {p.MiddleName} {p.LastName}".Trim(),
+            MobileNumber = p.MobileNumber,
+            Age = p.Age,
+            Gender = p.Gender
+        }).ToList();
+    }
+
+    public async Task<List<QuickSearchResponse>> GetRecentPatientsAsync(Guid tenantId, int limit)
+    {
+        var patients = await _patientRepository.GetRecentPatientsAsync(tenantId, limit);
+        return patients.Select(p => new QuickSearchResponse
+        {
+            Id = p.Id,
+            UHID = p.UHID,
+            FullName = $"{p.FirstName} {p.MiddleName} {p.LastName}".Trim(),
+            MobileNumber = p.MobileNumber,
+            Age = p.Age,
+            Gender = p.Gender
+        }).ToList();
     }
 
     private static PatientResponse MapToResponse(Patient patient)
