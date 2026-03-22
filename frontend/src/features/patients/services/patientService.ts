@@ -108,8 +108,8 @@ export const patientService = {
       .then((r) => r.data),
 
   /** Advanced search — maps UI filters to PatientSearchRequest (v2) */
-  searchPatients: (filters: PatientSearchParams & Record<string, unknown>) => {
-    const f = filters as Record<string, unknown>;
+  searchPatients: (filters: any) => {
+    const f = filters as Record<string, any>;
     const searchTerm =
       (f.searchTerm as string | undefined) ||
       (f.searchText as string | undefined) ||

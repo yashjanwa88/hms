@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -19,6 +20,7 @@ interface FileManagerProps {
 const CATEGORIES = ['Medical', 'Insurance', 'Identity', 'Report', 'Prescription', 'Other'];
 
 export function FileManager({ patientId, patientName }: FileManagerProps) {
+  const { t } = useTranslation();
   const [showUpload, setShowUpload] = useState(false);
   const [selectedFile, setSelectedFile] = useState<FileManagerModel | null>(null);
   const [showViewer, setShowViewer] = useState(false);
@@ -165,24 +167,24 @@ export function FileManager({ patientId, patientName }: FileManagerProps) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Document Manager</h1>
+          <h1 className="text-3xl font-bold">{t('documents.title')}</h1>
           <p className="text-gray-600 mt-1">Patient: {patientName}</p>
         </div>
         <Button onClick={() => setShowUpload(!showUpload)}>
           <Upload className="h-4 w-4 mr-2" />
-          Upload Documents
+          {t('documents.upload')}
         </Button>
       </div>
 
       {/* Upload Form */}
       {showUpload && (
         <Card>
-          <CardHeader><CardTitle>Upload Documents</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t('documents.upload')}</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={handleUpload} className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label>Category *</Label>
+                  <Label>{t('documents.category')} *</Label>
                   <select
                     value={uploadData.category}
                     onChange={(e) => setUploadData({ ...uploadData, category: e.target.value })}
@@ -193,7 +195,7 @@ export function FileManager({ patientId, patientName }: FileManagerProps) {
                   </select>
                 </div>
                 <div>
-                  <Label>Sub Category</Label>
+                  <Label>{t('documents.sub_category')}</Label>
                   <Input
                     value={uploadData.subCategory}
                     onChange={(e) => setUploadData({ ...uploadData, subCategory: e.target.value })}
@@ -201,7 +203,7 @@ export function FileManager({ patientId, patientName }: FileManagerProps) {
                   />
                 </div>
                 <div>
-                  <Label>Document Date</Label>
+                  <Label>{t('documents.date')}</Label>
                   <Input
                     type="date"
                     value={uploadData.documentDate}
@@ -211,7 +213,7 @@ export function FileManager({ patientId, patientName }: FileManagerProps) {
               </div>
 
               <div>
-                <Label>Description</Label>
+                <Label>{t('documents.description')}</Label>
                 <Input
                   value={uploadData.description}
                   onChange={(e) => setUploadData({ ...uploadData, description: e.target.value })}
@@ -220,7 +222,7 @@ export function FileManager({ patientId, patientName }: FileManagerProps) {
               </div>
 
               <div>
-                <Label>Tags (comma separated)</Label>
+                <Label>{t('documents.tags')} (comma separated)</Label>
                 <Input
                   value={uploadData.tags}
                   onChange={(e) => setUploadData({ ...uploadData, tags: e.target.value })}
@@ -235,11 +237,11 @@ export function FileManager({ patientId, patientName }: FileManagerProps) {
                   checked={uploadData.isConfidential}
                   onChange={(e) => setUploadData({ ...uploadData, isConfidential: e.target.checked })}
                 />
-                <Label htmlFor="confidential">Mark as Confidential</Label>
+                <Label htmlFor="confidential">{t('documents.confidential')}</Label>
               </div>
 
               <div>
-                <Label>Select Files *</Label>
+                <Label>{t('documents.select_files')} *</Label>
                 <input
                   type="file"
                   multiple
@@ -248,14 +250,14 @@ export function FileManager({ patientId, patientName }: FileManagerProps) {
                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">PDF, JPG, PNG, DOC, DOCX — Max 10MB per file</p>
+                <p className="text-xs text-gray-500 mt-1">{t('documents.max_size')}</p>
               </div>
 
               <div className="flex gap-2">
                 <Button type="submit" disabled={uploadMutation.isPending}>
-                  {uploadMutation.isPending ? 'Uploading...' : 'Upload'}
+                  {uploadMutation.isPending ? 'Uploading...' : t('documents.upload')}
                 </Button>
-                <Button type="button" variant="outline" onClick={resetUploadForm}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={resetUploadForm}>{t('common.cancel')}</Button>
               </div>
             </form>
           </CardContent>
@@ -294,7 +296,7 @@ export function FileManager({ patientId, patientName }: FileManagerProps) {
           ) : documents.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <File className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-              <p>No documents found</p>
+              <p>{t('documents.no_documents')}</p>
             </div>
           ) : (
             <DocumentList

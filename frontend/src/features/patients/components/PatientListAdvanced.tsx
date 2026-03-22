@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -15,6 +16,7 @@ import { PatientSearchModel, PatientInfoModel } from '../types';
 import { patientService } from '../services/patientService';
 
 export function PatientListAdvanced() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
@@ -181,7 +183,7 @@ export function PatientListAdvanced() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Patient Management</h1>
+          <h1 className="text-3xl font-bold">{t('patients.title')}</h1>
           <p className="text-gray-600 mt-1">Manage and search patient records</p>
         </div>
         <div className="flex gap-2">
@@ -195,7 +197,7 @@ export function PatientListAdvanced() {
           </Button>
           <Button onClick={() => navigate('/patients/register')}>
             <User className="h-4 w-4 mr-2" />
-            New Patient
+            {t('patients.register')}
           </Button>
         </div>
       </div>
@@ -207,7 +209,7 @@ export function PatientListAdvanced() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Quick search by name, UHID, mobile, or email..."
+                placeholder={t('patients.search_placeholder')}
                 value={searchFilters.searchText}
                 onChange={(e) => setSearchFilters({ ...searchFilters, searchText: e.target.value })}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -216,7 +218,7 @@ export function PatientListAdvanced() {
             </div>
             <Button onClick={handleSearch}>
               <Search className="h-4 w-4 mr-2" />
-              Search
+              {t('common.search')}
             </Button>
             <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
               <Filter className="h-4 w-4 mr-2" />
@@ -479,14 +481,14 @@ export function PatientListAdvanced() {
                         className="rounded"
                       />
                     </th>
-                    <th className="p-3 text-left text-sm font-medium">UHID</th>
+                    <th className="p-3 text-left text-sm font-medium">{t('patients.uhid')}</th>
                     <th className="p-3 text-left text-sm font-medium">Patient Name</th>
                     <th className="p-3 text-left text-sm font-medium">Age/Gender</th>
-                    <th className="p-3 text-left text-sm font-medium">Contact</th>
-                    <th className="p-3 text-left text-sm font-medium">Location</th>
+                    <th className="p-3 text-left text-sm font-medium">{t('patients.contact')}</th>
+                    <th className="p-3 text-left text-sm font-medium">{t('patients.city')}</th>
                     <th className="p-3 text-left text-sm font-medium">Registration</th>
-                    <th className="p-3 text-center text-sm font-medium">Status</th>
-                    <th className="p-3 text-center text-sm font-medium">Actions</th>
+                    <th className="p-3 text-center text-sm font-medium">{t('common.status')}</th>
+                    <th className="p-3 text-center text-sm font-medium">{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">

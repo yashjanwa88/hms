@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { patientService } from '../services/patientService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -7,6 +10,24 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { User, FileText, Camera, Shield } from 'lucide-react';
+
+const registrationSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  gender: z.string().min(1, 'Gender is required'),
+  dateOfBirth: z.string().min(1, 'Date of birth is required'),
+  mobileNumber: z.string().regex(/^[0-9]{10}$/, 'Valid 10 digit mobile required'),
+  registrationType: z.string().min(1, 'Registration type is required'),
+  consentTermsAccepted: z.literal(true, {
+    errorMap: () => ({ message: 'You must accept the terms' }),
+  }),
+  consentPrivacyAccepted: z.literal(true, {
+    errorMap: () => ({ message: 'You must accept the privacy policy' }),
+  }),
+  consentHealthDataSharing: z.literal(true, {
+    errorMap: () => ({ message: 'You must accept health data sharing' }),
+  }),
+}).passthrough();
 
 interface PatientRegistrationFormProps {
   patientId?: string;
@@ -16,6 +37,7 @@ interface PatientRegistrationFormProps {
 }
 
 export function PatientRegistrationForm({ patientId, onSubmit, onCancel, isSubmitting }: PatientRegistrationFormProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('personal');
   const [isNewborn, setIsNewborn] = useState(false);
   const [isDeceased, setIsDeceased] = useState(false);
@@ -23,6 +45,7 @@ export function PatientRegistrationForm({ patientId, onSubmit, onCancel, isSubmi
   const [insuranceProviders, setInsuranceProviders] = useState<{ id: string; providerName: string }[]>([]);
   
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+    resolver: zodResolver(registrationSchema),
     defaultValues: {
       // Personal Information
       patientPrefix: '',
@@ -177,20 +200,20 @@ export function PatientRegistrationForm({ patientId, onSubmit, onCancel, isSubmi
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            Patient Registration
+            {patientId ? t('patients.update') : t('patients.registration')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid grid-cols-8 w-full">
-              <TabsTrigger value="personal">Personal</TabsTrigger>
-              <TabsTrigger value="identification">ID</TabsTrigger>
-              <TabsTrigger value="contact">Contact</TabsTrigger>
-              <TabsTrigger value="emergency">Emergency</TabsTrigger>
-              <TabsTrigger value="referral">Referral</TabsTrigger>
-              <TabsTrigger value="biometric">Biometric</TabsTrigger>
-              <TabsTrigger value="insurance">Insurance</TabsTrigger>
-              <TabsTrigger value="death">Death</TabsTrigger>
+              <TabsTrigger value="personal">{t('patients.personal_info')}</TabsTrigger>
+              <TabsTrigger value="identification">{t('patients.identification')}</TabsTrigger>
+              <TabsTrigger value="contact">{t('patients.contact')}</TabsTrigger>
+              <TabsTrigger value="emergency">{t('patients.emergency')}</TabsTrigger>
+              <TabsTrigger value="referral">{t('patients.referral')}</TabsTrigger>
+              <TabsTrigger value="biometric">{t('patients.biometric')}</TabsTrigger>
+              <TabsTrigger value="insurance">{t('patients.insurance')}</TabsTrigger>
+              <TabsTrigger value="death">{t('patients.death')}</TabsTrigger>
             </TabsList>
 
             {/* Personal Information Tab */}
@@ -246,9 +269,9 @@ export function PatientRegistrationForm({ patientId, onSubmit, onCancel, isSubmi
                   </div>
                   
                   <div>
-                    <Label>First Name *</Label>
-                    <Input {...register('firstName', { required: true })} />
-                    {errors.firstName && <span className="text-red-500 text-sm">Required</span>}
+                    <Label>{t('patients.first_name')} *</Label>
+                    <Input {...register('firstName')} />
+                    {errors.firstName && <span className="text-red-500 text-sm">{errors.firstName.message as string}</span>}
                   </div>
                   
                   <div>
@@ -257,9 +280,9 @@ export function PatientRegistrationForm({ patientId, onSubmit, onCancel, isSubmi
                   </div>
                   
                   <div>
-                    <Label>Last Name *</Label>
-                    <Input {...register('lastName', { required: true })} />
-                    {errors.lastName && <span className="text-red-500 text-sm">Required</span>}
+                    <Label>{t('patients.last_name')} *</Label>
+                    <Input {...register('lastName')} />
+                    {errors.lastName && <span className="text-red-500 text-sm">{errors.lastName.message as string}</span>}
                   </div>
                   
                   <div>
@@ -268,25 +291,27 @@ export function PatientRegistrationForm({ patientId, onSubmit, onCancel, isSubmi
                   </div>
                   
                   <div>
-                    <Label>Gender *</Label>
-                    <select {...register('gender', { required: true })} className="w-full border rounded px-3 py-2">
+                    <Label>{t('patients.gender')} *</Label>
+                    <select {...register('gender')} className="w-full border rounded px-3 py-2">
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
                       <option value="Other">Other</option>
                     </select>
+                    {errors.gender && <span className="text-red-500 text-sm">{errors.gender.message as string}</span>}
                   </div>
                   
                   <div>
-                    <Label>Date of Birth *</Label>
+                    <Label>{t('patients.dob')} *</Label>
                     <Input 
                       type="date" 
-                      {...register('dateOfBirth', { required: !isNewborn })} 
+                      {...register('dateOfBirth')} 
                       onChange={(e) => calculateAge(e.target.value)}
                     />
+                    {errors.dateOfBirth && <span className="text-red-500 text-sm">{errors.dateOfBirth.message as string}</span>}
                   </div>
                   
                   <div>
-                    <Label>Blood Group</Label>
+                    <Label>{t('patients.blood_group')}</Label>
                     <select {...register('bloodGroup')} className="w-full border rounded px-3 py-2">
                       <option value="">Select</option>
                       <option value="A+">A+</option>
@@ -451,16 +476,16 @@ export function PatientRegistrationForm({ patientId, onSubmit, onCancel, isSubmi
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label>Mobile Number *</Label>
+                  <Label>{t('patients.mobile')} *</Label>
                   <div className="flex gap-2">
                     <select {...register('telephoneCode')} className="w-24 border rounded px-2 py-2">
                       <option value="+91">+91</option>
                       <option value="+1">+1</option>
                       <option value="+44">+44</option>
                     </select>
-                    <Input {...register('mobileNumber', { required: true, pattern: /^[0-9]{10}$/ })} placeholder="10 digit mobile" />
+                    <Input {...register('mobileNumber')} placeholder="10 digit mobile" />
                   </div>
-                  {errors.mobileNumber && <span className="text-red-500 text-sm">Valid 10 digit mobile required</span>}
+                  {errors.mobileNumber && <span className="text-red-500 text-sm">{errors.mobileNumber.message as string}</span>}
                 </div>
                 <div>
                   <Label>Alternate Mobile</Label>
@@ -471,7 +496,7 @@ export function PatientRegistrationForm({ patientId, onSubmit, onCancel, isSubmi
                   <Input {...register('whatsappNumber')} />
                 </div>
                 <div>
-                  <Label>Email</Label>
+                  <Label>{t('patients.email')}</Label>
                   <Input type="email" {...register('email')} />
                 </div>
               </div>
@@ -713,7 +738,7 @@ export function PatientRegistrationForm({ patientId, onSubmit, onCancel, isSubmi
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Shield className="h-5 w-5 text-amber-800" />
-                Declarations &amp; consent
+                {t('patients.consent')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
@@ -721,44 +746,40 @@ export function PatientRegistrationForm({ patientId, onSubmit, onCancel, isSubmi
                 <input
                   type="checkbox"
                   className="mt-1"
-                  {...register('consentTermsAccepted', {
-                    validate: (v) => v === true || 'Required for registration',
-                  })}
+                  {...register('consentTermsAccepted')}
                 />
-                <span>I accept the facility terms of service and rules of admission.</span>
+                <span>{t('patients.consent_terms')}</span>
               </label>
+              {errors.consentTermsAccepted && <p className="text-red-500 text-xs">{errors.consentTermsAccepted.message as string}</p>}
+              
               <label className="flex items-start gap-2">
                 <input
                   type="checkbox"
                   className="mt-1"
-                  {...register('consentPrivacyAccepted', {
-                    validate: (v) => v === true || 'Required for registration',
-                  })}
+                  {...register('consentPrivacyAccepted')}
                 />
-                <span>I accept the privacy and data protection policy.</span>
+                <span>{t('patients.consent_privacy')}</span>
               </label>
+              {errors.consentPrivacyAccepted && <p className="text-red-500 text-xs">{errors.consentPrivacyAccepted.message as string}</p>}
+              
               <label className="flex items-start gap-2">
                 <input
                   type="checkbox"
                   className="mt-1"
-                  {...register('consentHealthDataSharing', {
-                    validate: (v) => v === true || 'Required for registration',
-                  })}
+                  {...register('consentHealthDataSharing')}
                 />
-                <span>
-                  I consent to necessary sharing of health information with insurers / payers for cashless
-                  and claims, as applicable.
-                </span>
+                <span>{t('patients.consent_data')}</span>
               </label>
+              {errors.consentHealthDataSharing && <p className="text-red-500 text-xs">{errors.consentHealthDataSharing.message as string}</p>}
             </CardContent>
           </Card>
 
           <div className="flex justify-end gap-3 mt-6 pt-6 border-t">
             <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {patientId ? 'Update Patient' : isSubmitting ? 'Registering…' : 'Register Patient'}
+              {patientId ? t('patients.update') : isSubmitting ? 'Registering…' : t('patients.register')}
             </Button>
           </div>
         </CardContent>

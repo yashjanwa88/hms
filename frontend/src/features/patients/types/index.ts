@@ -439,6 +439,7 @@ export interface PatientTypeDetailModel {
 }
 
 export interface PatientSearchModel {
+  [key: string]: any;
   searchText?: string;
   uhid?: string;
   firstName?: string;

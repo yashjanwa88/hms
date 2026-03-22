@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import type { RootState } from '@/store';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -8,13 +9,16 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { userService } from '../services/userService';
 import { toast } from 'sonner';
-import { Shield, UserPlus, CheckCircle, XCircle, Settings, Users as UsersIcon, Lock } from 'lucide-react';
+import { Shield, UserPlus, CheckCircle, XCircle, Settings, Users as UsersIcon, Lock, Mail, Phone, MoreVertical } from 'lucide-react';
 import { UserSecurityPanel } from '../components/UserSecurityPanel';
 import { UserSecurityOversightModal } from '../components/UserSecurityOversightModal';
 import { AdminResetPasswordModal } from '../components/AdminResetPasswordModal';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { Badge } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils';
 
 export function UsersPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const permissionCodes = useSelector((s: RootState) => s.auth.permissions);
   const canOversight = permissionCodes.includes('role.manage');
@@ -121,8 +125,8 @@ export function UsersPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">User &amp; role management</h1>
-          <p className="text-muted-foreground">Directory, RBAC, and your session security</p>
+          <h1 className="text-3xl font-bold">{t('users.title')}</h1>
+          <p className="text-muted-foreground">{t('users.subtitle')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -130,19 +134,19 @@ export function UsersPage() {
             onClick={() => setActiveSection('directory')}
           >
             <UsersIcon className="mr-2 h-4 w-4" />
-            Directory
+            {t('users.directory')}
           </Button>
           <Button
             variant={activeSection === 'security' ? 'default' : 'outline'}
             onClick={() => setActiveSection('security')}
           >
             <Lock className="mr-2 h-4 w-4" />
-            My security
+            {t('users.my_security')}
           </Button>
           {activeSection === 'directory' && (
             <Button onClick={() => setShowCreateUser(true)}>
               <UserPlus className="h-4 w-4 mr-2" />
-              Create user
+              {t('users.create_user')}
             </Button>
           )}
         </div>
@@ -159,7 +163,7 @@ export function UsersPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
-              Users List
+              {t('users.users_list')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -176,38 +180,52 @@ export function UsersPage() {
             ) : users.length > 0 ? (
               <div className="space-y-3">
                 {users.map((user: any) => (
-                  <div key={user.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start gap-2">
-                      <div>
-                        <h3 className="font-semibold text-lg">
-                          {user.firstName} {user.lastName}
-                        </h3>
-                        <p className="text-sm text-gray-600">{user.email}</p>
-                        <p className="text-sm text-gray-500">{user.phoneNumber}</p>
+                  <div key={user.id} className="group border border-slate-100 dark:border-slate-800 rounded-xl p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex gap-4">
+                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
+                          <UsersIcon className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg text-slate-900 dark:text-white leading-tight">
+                            {user.firstName} {user.lastName}
+                          </h3>
+                          <div className="flex flex-col gap-1 mt-1.5">
+                            <div className="flex items-center text-sm text-slate-500 dark:text-slate-400 gap-2">
+                              <Mail className="h-3.5 w-3.5" />
+                              {user.email}
+                            </div>
+                            <div className="flex items-center text-sm text-slate-500 dark:text-slate-400 gap-2">
+                              <Phone className="h-3.5 w-3.5" />
+                              {user.phoneNumber}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <Badge variant="info" className="mb-2">
                           {user.role}
-                        </span>
-                        <div className="mt-2">
+                        </Badge>
+                        <div className="flex items-center justify-end">
                           {user.isActive ? (
-                            <span className="inline-flex items-center text-xs text-green-600">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Active
-                            </span>
+                            <Badge variant="success" className="gap-1 px-1.5 h-5">
+                              <CheckCircle className="h-3 w-3" />
+                              {t('common.active')}
+                            </Badge>
                           ) : (
-                            <span className="inline-flex items-center text-xs text-red-600">
-                              <XCircle className="h-3 w-3 mr-1" />
-                              Inactive
-                            </span>
+                            <Badge variant="destructive" className="gap-1 px-1.5 h-5">
+                              <XCircle className="h-3 w-3" />
+                              {t('common.inactive')}
+                            </Badge>
                           )}
                         </div>
-                        <div className="mt-2 flex flex-col gap-1 items-end">
+                        <div className="mt-4 flex flex-col gap-2 items-end">
                           {canOversight ? (
                             <Button
                               type="button"
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
+                              className="h-8 text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-primary"
                               onClick={() =>
                                 setOversightUser({
                                   id: user.id,
@@ -215,14 +233,15 @@ export function UsersPage() {
                                 })
                               }
                             >
-                              Sessions &amp; logins
+                              Sessions &amp; Logins
                             </Button>
                           ) : null}
                           {canResetPassword ? (
                             <Button
                               type="button"
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
+                              className="h-8 text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-primary"
                               onClick={() =>
                                 setResetPasswordUser({
                                   id: user.id,
@@ -230,7 +249,7 @@ export function UsersPage() {
                                 })
                               }
                             >
-                              Set password
+                              {t('auth.change_password')}
                             </Button>
                           ) : null}
                         </div>
@@ -248,9 +267,9 @@ export function UsersPage() {
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>Roles & Permissions</CardTitle>
+              <CardTitle>{t('users.roles_permissions')}</CardTitle>
               <Button size="sm" onClick={() => setShowCreateRole(true)}>
-                Add Role
+                {t('users.add_role')}
               </Button>
             </div>
           </CardHeader>
@@ -269,29 +288,39 @@ export function UsersPage() {
               </div>
             ) : roles.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                No roles yet. Click <span className="font-medium text-foreground">Add Role</span> to create one, then attach
+                No roles yet. Click <span className="font-medium text-foreground">{t('users.add_role')}</span> to create one, then attach
                 permissions (or use <span className="font-medium text-foreground">Users → Permissions</span> for the full
                 matrix).
               </p>
             ) : (
               <div className="space-y-3">
                 {roles.map((role: any) => (
-                  <div key={role.id} className="border rounded-lg p-4">
+                  <div key={role.id} className="group border border-slate-100 dark:border-slate-800 rounded-xl p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200">
                     <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="font-semibold text-lg">{role.name}</h3>
-                        <p className="text-sm text-gray-600">{role.description}</p>
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center border border-amber-200 dark:border-amber-800 shrink-0">
+                          <Shield className="h-5 w-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg text-slate-900 dark:text-white leading-tight">
+                            {role.name}
+                          </h3>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                            {role.description || 'System role with custom permissions'}
+                          </p>
+                        </div>
                       </div>
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="ghost"
+                        className="h-9 gap-2 font-bold text-xs uppercase tracking-widest text-slate-500 hover:text-primary hover:bg-primary/5"
                         onClick={() => {
                           setSelectedRole(role);
                           setShowRolePermissions(true);
                         }}
                       >
-                        <Settings className="h-4 w-4 mr-1" />
-                        Manage
+                        <Settings className="h-4 w-4" />
+                        {t('users.manage')}
                       </Button>
                     </div>
                   </div>
