@@ -7,9 +7,10 @@ public class CreateAppointmentRequest
     public DateTime AppointmentDate { get; set; }
     public TimeSpan StartTime { get; set; }
     public TimeSpan EndTime { get; set; }
-    public string AppointmentType { get; set; } = "Consultation";
+    public string AppointmentType { get; set; } = "New"; // New, Follow-up, Emergency
     public string Reason { get; set; } = string.Empty;
     public string Notes { get; set; } = string.Empty;
+    public bool SendNotification { get; set; } = true;
 }
 
 public class RescheduleAppointmentRequest
@@ -98,4 +99,42 @@ public class DoctorDto
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string FullName => $"{FirstName} {LastName}";
+    public string Department { get; set; } = string.Empty;
+    public decimal ConsultationFee { get; set; }
+    public int MaxPatientsPerDay { get; set; }
+    public List<string> Specializations { get; set; } = new();
+}
+
+public class DoctorForBookingResponse
+{
+    public Guid Id { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string Department { get; set; } = string.Empty;
+    public List<string> Specializations { get; set; } = new();
+    public decimal ConsultationFee { get; set; }
+    public int MaxPatientsPerDay { get; set; }
+}
+
+public class DateValidationResponse
+{
+    public bool IsValid { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public bool IsPastDate { get; set; }
+    public bool IsDoctorAvailable { get; set; }
+    public bool HasReachedDailyLimit { get; set; }
+    public int CurrentAppointmentCount { get; set; }
+    public int MaxAppointmentsAllowed { get; set; }
+}
+
+public class BookAppointmentRequest
+{
+    public Guid PatientId { get; set; }
+    public Guid DoctorId { get; set; }
+    public DateTime AppointmentDate { get; set; }
+    public string StartTime { get; set; } = string.Empty;
+    public string EndTime { get; set; } = string.Empty;
+    public string AppointmentType { get; set; } = "New";
+    public string Reason { get; set; } = string.Empty;
+    public string Notes { get; set; } = string.Empty;
+    public bool SendNotification { get; set; } = true;
 }

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PatientService.Application;
 using PatientService.DTOs;
+using Shared.Common.Authorization;
 using Shared.Common.Models;
 
 namespace PatientService.Controllers;
@@ -21,7 +22,7 @@ public class PatientSearchController : ControllerBase
     }
 
     [HttpGet("search")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist,Accountant")]
+    [RequirePermission("patient.view")]
     public async Task<IActionResult> SearchPatients([FromQuery] string? q, [FromQuery] int page = 1, [FromQuery] int size = 20)
     {
         try
@@ -46,17 +47,18 @@ public class PatientSearchController : ControllerBase
     }
 
     [HttpGet("quick-search")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist,Accountant")]
-    public async Task<IActionResult> QuickSearch([FromQuery] string q)
+    [RequirePermission("patient.view")]
+    public async Task<IActionResult> QuickSearch([FromQuery] string q, [FromQuery] int maxResults = 10)
     {
         try
         {
             var tenantId = Guid.Parse(Request.Headers["X-Tenant-Id"].ToString());
-            
+            var limit = maxResults is > 0 and <= 50 ? maxResults : 10;
+
             var request = new QuickSearchRequest
             {
                 SearchTerm = q,
-                MaxResults = 10
+                MaxResults = limit
             };
 
             var result = await _patientService.QuickSearchAsync(request, tenantId);
@@ -70,7 +72,7 @@ public class PatientSearchController : ControllerBase
     }
 
     [HttpGet("recent")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist,Accountant")]
+    [RequirePermission("patient.view")]
     public async Task<IActionResult> GetRecentPatients([FromQuery] int limit = 10)
     {
         try
@@ -83,6 +85,28 @@ public class PatientSearchController : ControllerBase
         {
             _logger.LogError(ex, "Error getting recent patients");
             return StatusCode(500, ApiResponse<object>.ErrorResponse("Failed to get recent patients"));
+        }
+    }
+
+    [HttpGet("{id}")]
+    [RequirePermission("patient.view")]
+    [ApiExplorerSettings(IgnoreApi = true)] // Served by OptimizedPatientController /v2/{id}
+    public async Task<IActionResult> GetPatientById(Guid id)
+    {
+        try
+        {
+            var tenantId = Guid.Parse(Request.Headers["X-Tenant-Id"].ToString());
+            var patient = await _patientService.GetPatientByIdAsync(id, tenantId);
+
+            if (patient == null)
+                return NotFound(ApiResponse<object>.ErrorResponse("Patient not found"));
+
+            return Ok(ApiResponse<PatientResponse>.SuccessResponse(patient, "Success"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting patient");
+            return StatusCode(500, ApiResponse<object>.ErrorResponse("Failed to get patient"));
         }
     }
 }

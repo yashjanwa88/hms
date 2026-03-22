@@ -40,6 +40,7 @@ public class PatientRegistrationRepository : BaseRepository<Patient>, IPatientRe
                 allergies_summary, chronic_conditions, current_medications, disability_status, organ_donor,
                 emergency_contact_name, emergency_contact_relation, emergency_contact_mobile,
                 insurance_provider_id, policy_number, valid_from, valid_to,
+                consent_terms_accepted, consent_privacy_accepted, consent_health_data_sharing, consent_recorded_at,
                 registration_date, registered_by, status, visit_count, created_at, created_by, is_deleted
             ) VALUES (
                 @Id, @TenantId, @UHID, @FirstName, @MiddleName, @LastName, @Gender, @DateOfBirth,
@@ -48,6 +49,7 @@ public class PatientRegistrationRepository : BaseRepository<Patient>, IPatientRe
                 @AllergiesSummary, @ChronicConditions, @CurrentMedications, @DisabilityStatus, @OrganDonor,
                 @EmergencyContactName, @EmergencyContactRelation, @EmergencyContactMobile,
                 @InsuranceProviderId, @PolicyNumber, @ValidFrom, @ValidTo,
+                @ConsentTermsAccepted, @ConsentPrivacyAccepted, @ConsentHealthDataSharing, @ConsentRecordedAt,
                 @RegistrationDate, @RegisteredBy, @Status, @VisitCount, @CreatedAt, @CreatedBy, @IsDeleted
             )";
         
@@ -282,6 +284,8 @@ public class PatientRegistrationRepository : BaseRepository<Patient>, IPatientRe
                 emergency_contact_mobile as EmergencyContactMobile,
                 insurance_provider_id as InsuranceProviderId, policy_number as PolicyNumber,
                 valid_from as ValidFrom, valid_to as ValidTo,
+                consent_terms_accepted as ConsentTermsAccepted, consent_privacy_accepted as ConsentPrivacyAccepted,
+                consent_health_data_sharing as ConsentHealthDataSharing, consent_recorded_at as ConsentRecordedAt,
                 registration_date as RegistrationDate, registered_by as RegisteredBy,
                 status as Status, visit_count as VisitCount,
                 created_at as CreatedAt, created_by as CreatedBy,

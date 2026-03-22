@@ -30,6 +30,35 @@ public class RefreshToken : BaseEntity
     public string Token { get; set; } = string.Empty;
     public DateTime ExpiresAt { get; set; }
     public bool IsRevoked { get; set; }
+    /// <summary>Client IP at token creation (session audit).</summary>
+    public string? IpAddress { get; set; }
+    public string? UserAgent { get; set; }
+    public DateTime? LastUsedAt { get; set; }
+}
+
+/// <summary>Hospital or clinic — <see cref="BaseEntity.Id"/> is the tenant id used in X-Tenant-Id.</summary>
+public class Tenant
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
+    public string? PrimaryEmail { get; set; }
+    public string Timezone { get; set; } = "UTC";
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public bool IsDeleted { get; set; }
+}
+
+/// <summary>Stores TOTP secret (protected via IDataProtection).</summary>
+public class UserMfaSettings
+{
+    public Guid UserId { get; set; }
+    public Guid TenantId { get; set; }
+    public string SecretProtected { get; set; } = string.Empty;
+    public bool IsEnabled { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 }
 
 public class LoginAudit : BaseEntity

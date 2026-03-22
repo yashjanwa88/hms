@@ -1,15 +1,15 @@
 using InsuranceService.Application;
 using InsuranceService.Integrations;
 using InsuranceService.Repositories;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Shared.Common.Authorization;
+using Shared.Common.Extensions;
 using Shared.Common.Middleware;
-using Shared.EventBus.Implementations;
+using Shared.Common.Services;
+using Shared.EventBus;
 using Shared.EventBus.Interfaces;
 using StackExchange.Redis;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,23 +23,9 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// JWT Authentication
-var jwtSecret = builder.Configuration["Jwt:Secret"] ?? throw new Exception("JWT Secret not configured");
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
-        };
-    });
-
-builder.Services.AddAuthorization();
+builder.Services.AddDigitalHospitalJwtAuthentication(builder.Configuration);
+builder.Services.AddDigitalHospitalPermissionAuthorization();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
 
 // Redis
 var redisConnection = builder.Configuration["Redis:ConnectionString"];
@@ -48,13 +34,16 @@ if (!string.IsNullOrEmpty(redisConnection))
     builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnection));
 }
 
-// RabbitMQ
-var rabbitMQHost = builder.Configuration["RabbitMQ:Host"] ?? "localhost";
-var rabbitMQPort = int.Parse(builder.Configuration["RabbitMQ:Port"] ?? "5672");
-var rabbitMQUser = builder.Configuration["RabbitMQ:Username"] ?? "guest";
-var rabbitMQPass = builder.Configuration["RabbitMQ:Password"] ?? "guest";
-builder.Services.AddSingleton<IEventBus>(sp =>
-    new RabbitMQEventBus(rabbitMQHost, rabbitMQPort, rabbitMQUser, rabbitMQPass, sp.GetRequiredService<ILogger<RabbitMQEventBus>>()));
+// RabbitMQ (shared bus uses hostname only; extend RabbitMQEventBus if creds are required)
+var rabbitMQHost = builder.Configuration["RabbitMQ:Host"];
+if (!string.IsNullOrWhiteSpace(rabbitMQHost))
+{
+    builder.Services.AddSingleton<IEventBus>(_ => new RabbitMQEventBus(rabbitMQHost));
+}
+else
+{
+    builder.Services.AddSingleton<IEventBus, NoOpEventBus>();
+}
 
 // HTTP Client for Patient Service
 builder.Services.AddHttpClient<IPatientServiceClient, PatientServiceClient>(client =>

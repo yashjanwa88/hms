@@ -3,6 +3,7 @@ using AppointmentService.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Common.Models;
+using Shared.Common.Authorization;
 
 namespace AppointmentService.Controllers;
 
@@ -19,7 +20,7 @@ public class AppointmentController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Receptionist,Doctor,Nurse,HospitalAdmin,SuperAdmin")]
+    [RequirePermission("appointment.book")]
     public async Task<ActionResult<ApiResponse<AppointmentResponse>>> CreateAppointment(
         [FromBody] CreateAppointmentRequest request,
         [FromHeader(Name = "X-Tenant-Id")] Guid tenantId,
@@ -40,7 +41,7 @@ public class AppointmentController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize(Roles = "Doctor,Nurse,Receptionist,HospitalAdmin,SuperAdmin")]
+    [RequirePermission("appointment.view")]
     public async Task<ActionResult<ApiResponse<AppointmentResponse>>> GetAppointment(
         Guid id,
         [FromHeader(Name = "X-Tenant-Id")] Guid tenantId,
@@ -63,7 +64,7 @@ public class AppointmentController : ControllerBase
     }
 
     [HttpPut("{id}/reschedule")]
-    [Authorize(Roles = "Receptionist,Doctor,HospitalAdmin,SuperAdmin")]
+    [RequirePermission("appointment.reschedule")]
     public async Task<ActionResult<ApiResponse<bool>>> RescheduleAppointment(
         Guid id,
         [FromBody] RescheduleAppointmentRequest request,
@@ -88,7 +89,7 @@ public class AppointmentController : ControllerBase
     }
 
     [HttpPut("{id}/cancel")]
-    [Authorize(Roles = "Receptionist,Doctor,HospitalAdmin,SuperAdmin")]
+    [RequirePermission("appointment.cancel")]
     public async Task<ActionResult<ApiResponse<bool>>> CancelAppointment(
         Guid id,
         [FromBody] CancelAppointmentRequest request,
@@ -111,7 +112,7 @@ public class AppointmentController : ControllerBase
     }
 
     [HttpPut("{id}/checkin")]
-    [Authorize(Roles = "Receptionist,Nurse,HospitalAdmin,SuperAdmin")]
+    [RequirePermission("appointment.checkin")]
     public async Task<ActionResult<ApiResponse<bool>>> CheckInAppointment(
         Guid id,
         [FromHeader(Name = "X-Tenant-Id")] Guid tenantId,
@@ -133,7 +134,7 @@ public class AppointmentController : ControllerBase
     }
 
     [HttpPut("{id}/complete")]
-    [Authorize(Roles = "Doctor,HospitalAdmin,SuperAdmin")]
+    [RequirePermission("appointment.complete")]
     public async Task<ActionResult<ApiResponse<bool>>> CompleteAppointment(
         Guid id,
         [FromHeader(Name = "X-Tenant-Id")] Guid tenantId,
@@ -155,7 +156,7 @@ public class AppointmentController : ControllerBase
     }
 
     [HttpGet("search")]
-    [Authorize(Roles = "Doctor,Nurse,Receptionist,HospitalAdmin,SuperAdmin")]
+    [RequirePermission("appointment.view")]
     public async Task<ActionResult<ApiResponse<PagedResult<AppointmentResponse>>>> SearchAppointments(
         [FromQuery] AppointmentSearchRequest request,
         [FromHeader(Name = "X-Tenant-Id")] Guid tenantId,
@@ -174,7 +175,7 @@ public class AppointmentController : ControllerBase
     }
 
     [HttpGet("available-slots")]
-    [Authorize(Roles = "Doctor,Nurse,Receptionist,HospitalAdmin,SuperAdmin")]
+    [RequirePermission("appointment.slots")]
     public async Task<ActionResult<ApiResponse<AvailableSlotResponse>>> GetAvailableSlots(
         [FromQuery] AvailableSlotRequest request,
         [FromHeader(Name = "X-Tenant-Id")] Guid tenantId,

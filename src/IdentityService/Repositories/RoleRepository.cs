@@ -12,6 +12,7 @@ public interface IRoleRepository
     Task<IEnumerable<Role>> GetAllAsync(Guid tenantId);
     Task<IEnumerable<Permission>> GetAllPermissionsAsync();
     Task<IEnumerable<string>> GetRolePermissionsAsync(Guid roleId);
+    Task<IReadOnlyList<string>> GetPermissionCodesByRoleIdAsync(Guid roleId);
     Task UpdateRolePermissionsAsync(Guid roleId, List<string> permissionIds);
 }
 
@@ -40,6 +41,19 @@ public class RoleRepository : BaseRepository<Role>, IRoleRepository
         using var connection = CreateConnection();
         var sql = "SELECT permission_id::text FROM role_permissions WHERE role_id = @RoleId AND is_deleted = false";
         return await connection.QueryAsync<string>(sql, new { RoleId = roleId });
+    }
+
+    public async Task<IReadOnlyList<string>> GetPermissionCodesByRoleIdAsync(Guid roleId)
+    {
+        using var connection = CreateConnection();
+        const string sql = @"
+            SELECT p.code
+            FROM permissions p
+            INNER JOIN role_permissions rp ON rp.permission_id = p.id AND rp.is_deleted = false
+            WHERE rp.role_id = @RoleId AND p.is_deleted = false
+            ORDER BY p.code";
+        var rows = await connection.QueryAsync<string>(sql, new { RoleId = roleId });
+        return rows.ToList();
     }
 
     public async Task UpdateRolePermissionsAsync(Guid roleId, List<string> permissionIds)

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmacyService.Application;
 using PharmacyService.DTOs;
+using Shared.Common.Authorization;
 using System.Security.Claims;
 
 namespace PharmacyService.Controllers;
@@ -19,7 +20,7 @@ public class PharmacyController : ControllerBase
     }
 
     [HttpPost("drugs")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Pharmacist")]
+    [RequirePermission("pharmacy.drug.manage")]
     public async Task<IActionResult> CreateDrug([FromBody] CreateDrugRequest request)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -30,7 +31,7 @@ public class PharmacyController : ControllerBase
     }
 
     [HttpGet("drugs")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Doctor,Nurse,Pharmacist")]
+    [RequirePermission("pharmacy.drug.view")]
     public async Task<IActionResult> GetDrugs()
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -40,7 +41,7 @@ public class PharmacyController : ControllerBase
     }
 
     [HttpGet("drugs/{id}")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Doctor,Nurse,Pharmacist")]
+    [RequirePermission("pharmacy.drug.view")]
     public async Task<IActionResult> GetDrugById(Guid id)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -50,7 +51,7 @@ public class PharmacyController : ControllerBase
     }
 
     [HttpPut("drugs/{id}")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Pharmacist")]
+    [RequirePermission("pharmacy.drug.manage")]
     public async Task<IActionResult> UpdateDrug(Guid id, [FromBody] UpdateDrugRequest request)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -61,7 +62,7 @@ public class PharmacyController : ControllerBase
     }
 
     [HttpPost("batches")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Pharmacist")]
+    [RequirePermission("pharmacy.drug.manage")]
     public async Task<IActionResult> CreateBatch([FromBody] CreateBatchRequest request)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -72,7 +73,7 @@ public class PharmacyController : ControllerBase
     }
 
     [HttpGet("batches/by-drug/{drugId}")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Pharmacist")]
+    [RequirePermission("pharmacy.drug.manage")]
     public async Task<IActionResult> GetBatchesByDrugId(Guid drugId)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -82,7 +83,7 @@ public class PharmacyController : ControllerBase
     }
 
     [HttpPost("prescriptions")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Doctor")]
+    [RequirePermission("pharmacy.prescription.create")]
     public async Task<IActionResult> CreatePrescription([FromBody] CreatePrescriptionRequest request)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -94,7 +95,7 @@ public class PharmacyController : ControllerBase
     }
 
     [HttpGet("prescriptions/{id}")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Doctor,Nurse,Pharmacist")]
+    [RequirePermission("pharmacy.prescription.view")]
     public async Task<IActionResult> GetPrescriptionById(Guid id)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -104,7 +105,7 @@ public class PharmacyController : ControllerBase
     }
 
     [HttpGet("prescriptions/by-patient/{patientId}")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Doctor,Nurse,Pharmacist")]
+    [RequirePermission("pharmacy.prescription.view")]
     public async Task<IActionResult> GetPrescriptionsByPatientId(Guid patientId)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -114,7 +115,7 @@ public class PharmacyController : ControllerBase
     }
 
     [HttpPost("prescriptions/{id}/verify")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Pharmacist")]
+    [RequirePermission("pharmacy.dispense")]
     public async Task<IActionResult> VerifyPrescription(Guid id)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -125,7 +126,7 @@ public class PharmacyController : ControllerBase
     }
 
     [HttpPost("prescriptions/{id}/cancel")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Doctor")]
+    [RequirePermission("pharmacy.prescription.create")]
     public async Task<IActionResult> CancelPrescription(Guid id, [FromBody] CancelPrescriptionRequest request)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -136,7 +137,7 @@ public class PharmacyController : ControllerBase
     }
 
     [HttpPost("prescriptions/{id}/dispense")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Pharmacist")]
+    [RequirePermission("pharmacy.dispense")]
     public async Task<IActionResult> DispensePrescription(Guid id)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -147,7 +148,7 @@ public class PharmacyController : ControllerBase
     }
 
     [HttpGet("prescriptions/{id}/receipt")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Doctor,Pharmacist")]
+    [RequirePermission("pharmacy.prescription.view")]
     public async Task<IActionResult> GetPrescriptionReceipt(Guid id)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -157,7 +158,7 @@ public class PharmacyController : ControllerBase
     }
 
     [HttpGet("reports/daily-sales")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Pharmacist,Accountant")]
+    [RequirePermission("pharmacy.report.sales")]
     public async Task<IActionResult> GetDailySalesReport([FromQuery] DateTime date)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -167,7 +168,7 @@ public class PharmacyController : ControllerBase
     }
 
     [HttpGet("reports/low-stock")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Pharmacist")]
+    [RequirePermission("pharmacy.report.inventory")]
     public async Task<IActionResult> GetLowStockReport()
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());

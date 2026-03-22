@@ -1,5 +1,6 @@
 using BillingService.Application;
 using BillingService.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Common.Models;
 using Shared.Common.Authorization;
@@ -8,6 +9,7 @@ namespace BillingService.Controllers;
 
 [ApiController]
 [Route("api/billing/v1/reports")]
+[Authorize]
 public class ReportsController : ControllerBase
 {
     private readonly IReportsService _reportsService;

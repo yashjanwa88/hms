@@ -1,13 +1,13 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PharmacyService.Application;
 using PharmacyService.Repositories;
 using Serilog;
+using Shared.Common.Authorization;
+using Shared.Common.Extensions;
+using Shared.Common.Services;
 using Shared.EventBus;
 using Shared.EventBus.Interfaces;
 using StackExchange.Redis;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,29 +21,13 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-var jwtSecret = builder.Configuration["Jwt:Secret"]!;
-var key = Encoding.ASCII.GetBytes(jwtSecret);
-
-builder.Services.AddAuthentication(options =>
+builder.Services.AddDigitalHospitalJwtAuthentication(builder.Configuration, o =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.RequireHttpsMetadata = false;
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ClockSkew = TimeSpan.Zero
-    };
+    o.RequireHttpsMetadata = false;
+    o.SaveToken = true;
 });
-
-builder.Services.AddAuthorization();
+builder.Services.AddDigitalHospitalPermissionAuthorization();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
 
 var redisConnectionString = builder.Configuration["Redis:ConnectionString"];
 if (!string.IsNullOrEmpty(redisConnectionString))

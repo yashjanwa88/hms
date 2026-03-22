@@ -9,8 +9,9 @@ public interface IRoleService
     Task<Role> CreateRoleAsync(CreateRoleRequest request, Guid tenantId, Guid createdBy);
     Task<IEnumerable<Role>> GetAllRolesAsync(Guid tenantId);
     Task<IEnumerable<Permission>> GetAllPermissionsAsync();
-    Task<IEnumerable<string>> GetRolePermissionsAsync(Guid roleId);
-    Task UpdateRolePermissionsAsync(Guid roleId, List<string> permissionIds);
+    /// <summary>Permission ids for the role; <paramref name="tenantId"/> must own the role.</summary>
+    Task<IEnumerable<string>> GetRolePermissionsAsync(Guid roleId, Guid tenantId);
+    Task UpdateRolePermissionsAsync(Guid roleId, Guid tenantId, List<string> permissionIds);
 }
 
 public class RoleService : IRoleService
@@ -52,13 +53,19 @@ public class RoleService : IRoleService
         return await _roleRepository.GetAllPermissionsAsync();
     }
 
-    public async Task<IEnumerable<string>> GetRolePermissionsAsync(Guid roleId)
+    public async Task<IEnumerable<string>> GetRolePermissionsAsync(Guid roleId, Guid tenantId)
     {
+        var role = await _roleRepository.GetByIdAsync(roleId, tenantId);
+        if (role == null)
+            throw new InvalidOperationException("Role not found for this tenant.");
         return await _roleRepository.GetRolePermissionsAsync(roleId);
     }
 
-    public async Task UpdateRolePermissionsAsync(Guid roleId, List<string> permissionIds)
+    public async Task UpdateRolePermissionsAsync(Guid roleId, Guid tenantId, List<string> permissionIds)
     {
+        var role = await _roleRepository.GetByIdAsync(roleId, tenantId);
+        if (role == null)
+            throw new InvalidOperationException("Role not found for this tenant.");
         await _roleRepository.UpdateRolePermissionsAsync(roleId, permissionIds);
     }
 }

@@ -85,6 +85,13 @@ public class RegisterPatientRequest
     
     public DateTime? ValidFrom { get; set; }
     public DateTime? ValidTo { get; set; }
+
+    /// <summary>Required declarations for lawful registration.</summary>
+    public bool ConsentTermsAccepted { get; set; }
+
+    public bool ConsentPrivacyAccepted { get; set; }
+
+    public bool ConsentHealthDataSharing { get; set; }
 }
 
 public class PatientRegistrationResponse

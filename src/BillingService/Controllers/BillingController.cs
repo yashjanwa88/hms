@@ -1,5 +1,6 @@
 using BillingService.Application;
 using BillingService.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Common.Models;
 using Shared.Common.Authorization;
@@ -8,6 +9,7 @@ namespace BillingService.Controllers;
 
 [ApiController]
 [Route("api/billing/invoices")]
+[Authorize]
 public class BillingController : ControllerBase
 {
     private readonly IBillingAppService _billingService;
@@ -18,6 +20,7 @@ public class BillingController : ControllerBase
     }
 
     [HttpPost]
+    [RequirePermission("invoice.create")]
     public async Task<IActionResult> CreateInvoice([FromBody] CreateInvoiceRequest request)
     {
         var tenantId = Guid.Parse(Request.Headers["X-Tenant-Id"].ToString());
@@ -58,6 +61,7 @@ public class BillingController : ControllerBase
     }
 
     [HttpGet("by-encounter/{encounterId}")]
+    [RequirePermission("invoice.view")]
     public async Task<IActionResult> GetInvoiceByEncounter(Guid encounterId)
     {
         var tenantId = Guid.Parse(Request.Headers["X-Tenant-Id"].ToString());
@@ -115,6 +119,7 @@ public class BillingController : ControllerBase
     }
 
     [HttpGet("search")]
+    [RequirePermission("invoice.view")]
     public async Task<IActionResult> SearchInvoices([FromQuery] InvoiceSearchRequest request)
     {
         var tenantId = Guid.Parse(Request.Headers["X-Tenant-Id"].ToString());
@@ -129,6 +134,7 @@ public class BillingController : ControllerBase
     }
 
     [HttpGet("health")]
+    [AllowAnonymous]
     public IActionResult Health()
     {
         return Ok(new { status = "healthy", service = "BillingService" });

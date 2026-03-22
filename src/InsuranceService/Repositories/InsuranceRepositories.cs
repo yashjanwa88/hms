@@ -14,7 +14,9 @@ public interface IInsuranceProviderRepository : IBaseRepository<InsuranceProvide
 
 public class InsuranceProviderRepository : BaseRepository<InsuranceProvider>, IInsuranceProviderRepository
 {
-    public InsuranceProviderRepository(string connectionString) : base(connectionString, "insurance_providers") { }
+    protected override string TableName => "insurance_providers";
+
+    public InsuranceProviderRepository(string connectionString) : base(connectionString) { }
 
     public async Task<List<InsuranceProvider>> GetActiveProvidersAsync(Guid tenantId)
     {
@@ -41,7 +43,9 @@ public interface IInsurancePolicyRepository : IBaseRepository<InsurancePolicy>
 
 public class InsurancePolicyRepository : BaseRepository<InsurancePolicy>, IInsurancePolicyRepository
 {
-    public InsurancePolicyRepository(string connectionString) : base(connectionString, "insurance_policies") { }
+    protected override string TableName => "insurance_policies";
+
+    public InsurancePolicyRepository(string connectionString) : base(connectionString) { }
 
     public async Task<List<InsurancePolicy>> GetByPatientIdAsync(Guid patientId, Guid tenantId)
     {
@@ -81,7 +85,9 @@ public interface IPreAuthorizationRepository : IBaseRepository<PreAuthorization>
 
 public class PreAuthorizationRepository : BaseRepository<PreAuthorization>, IPreAuthorizationRepository
 {
-    public PreAuthorizationRepository(string connectionString) : base(connectionString, "pre_authorizations") { }
+    protected override string TableName => "pre_authorizations";
+
+    public PreAuthorizationRepository(string connectionString) : base(connectionString) { }
 
     public async Task<string> GeneratePreAuthNumberAsync(Guid tenantId, string tenantCode)
     {
@@ -110,7 +116,9 @@ public interface IInsuranceClaimRepository : IBaseRepository<InsuranceClaim>
 
 public class InsuranceClaimRepository : BaseRepository<InsuranceClaim>, IInsuranceClaimRepository
 {
-    public InsuranceClaimRepository(string connectionString) : base(connectionString, "insurance_claims") { }
+    protected override string TableName => "insurance_claims";
+
+    public InsuranceClaimRepository(string connectionString) : base(connectionString) { }
 
     public async Task<string> GenerateClaimNumberAsync(Guid tenantId, string tenantCode)
     {
@@ -152,7 +160,9 @@ public interface IClaimSettlementRepository : IBaseRepository<ClaimSettlement>
 
 public class ClaimSettlementRepository : BaseRepository<ClaimSettlement>, IClaimSettlementRepository
 {
-    public ClaimSettlementRepository(string connectionString) : base(connectionString, "claim_settlements") { }
+    protected override string TableName => "claim_settlements";
+
+    public ClaimSettlementRepository(string connectionString) : base(connectionString) { }
 
     public async Task<string> GenerateSettlementNumberAsync(Guid tenantId, string tenantCode)
     {

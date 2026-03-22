@@ -48,3 +48,16 @@ public class AppointmentCheckedInEvent : IEvent
     public Guid PatientId { get; set; }
     public DateTime CheckInTime { get; set; }
 }
+
+public class AppointmentNotificationEvent : IEvent
+{
+    public Guid EventId { get; set; } = Guid.NewGuid();
+    public DateTime OccurredAt { get; set; } = DateTime.UtcNow;
+    public Guid TenantId { get; set; }
+    public Guid AppointmentId { get; set; }
+    public Guid PatientId { get; set; }
+    public Guid DoctorId { get; set; }
+    public DateTime AppointmentDate { get; set; }
+    public TimeSpan StartTime { get; set; }
+    public string NotificationType { get; set; } = string.Empty;
+}

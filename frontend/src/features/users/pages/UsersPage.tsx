@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/store';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -6,10 +8,20 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { userService } from '../services/userService';
 import { toast } from 'sonner';
-import { Shield, UserPlus, CheckCircle, XCircle, Settings } from 'lucide-react';
+import { Shield, UserPlus, CheckCircle, XCircle, Settings, Users as UsersIcon, Lock } from 'lucide-react';
+import { UserSecurityPanel } from '../components/UserSecurityPanel';
+import { UserSecurityOversightModal } from '../components/UserSecurityOversightModal';
+import { AdminResetPasswordModal } from '../components/AdminResetPasswordModal';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 export function UsersPage() {
   const queryClient = useQueryClient();
+  const permissionCodes = useSelector((s: RootState) => s.auth.permissions);
+  const canOversight = permissionCodes.includes('role.manage');
+  const canResetPassword = permissionCodes.includes('user.update');
+  const [oversightUser, setOversightUser] = useState<{ id: string; label: string } | null>(null);
+  const [resetPasswordUser, setResetPasswordUser] = useState<{ id: string; label: string } | null>(null);
+  const [activeSection, setActiveSection] = useState<'directory' | 'security'>('directory');
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [showCreateRole, setShowCreateRole] = useState(false);
   const [showRolePermissions, setShowRolePermissions] = useState(false);
@@ -24,12 +36,12 @@ export function UsersPage() {
     roleId: '',
   });
 
-  const { data: rolesData } = useQuery({
+  const { data: rolesData, isPending: rolesPending } = useQuery({
     queryKey: ['roles'],
     queryFn: () => userService.getRoles(),
   });
 
-  const { data: usersData, isLoading } = useQuery({
+  const { data: usersData, isPending: usersPending } = useQuery({
     queryKey: ['users'],
     queryFn: () => userService.getUsers(),
   });
@@ -51,7 +63,7 @@ export function UsersPage() {
   const rolePermissions = rolePermissionsData?.data || [];
 
   const createRoleMutation = useMutation({
-    mutationFn: (name: string) => userService.createRole(name),
+    mutationFn: (name: string) => userService.createRole(name, ''),
     onSuccess: () => {
       toast.success('Role created successfully');
       queryClient.invalidateQueries({ queryKey: ['roles'] });
@@ -107,17 +119,41 @@ export function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-gray-500">Manage users and their roles</p>
+          <h1 className="text-3xl font-bold">User &amp; role management</h1>
+          <p className="text-muted-foreground">Directory, RBAC, and your session security</p>
         </div>
-        <Button onClick={() => setShowCreateUser(true)}>
-          <UserPlus className="h-4 w-4 mr-2" />
-          Create User
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={activeSection === 'directory' ? 'default' : 'outline'}
+            onClick={() => setActiveSection('directory')}
+          >
+            <UsersIcon className="mr-2 h-4 w-4" />
+            Directory
+          </Button>
+          <Button
+            variant={activeSection === 'security' ? 'default' : 'outline'}
+            onClick={() => setActiveSection('security')}
+          >
+            <Lock className="mr-2 h-4 w-4" />
+            My security
+          </Button>
+          {activeSection === 'directory' && (
+            <Button onClick={() => setShowCreateUser(true)}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Create user
+            </Button>
+          )}
+        </div>
       </div>
 
+      {activeSection === 'security' ? (
+        <UserSecurityPanel />
+      ) : null}
+
+      {activeSection === 'directory' ? (
+        <>
       <div className="grid grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -127,13 +163,21 @@ export function UsersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div>Loading...</div>
+            {usersPending ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="space-y-2 rounded-lg border p-4">
+                    <Skeleton className="h-5 w-44" />
+                    <Skeleton className="h-4 w-56" />
+                    <Skeleton className="h-4 w-36" />
+                  </div>
+                ))}
+              </div>
             ) : users.length > 0 ? (
               <div className="space-y-3">
                 {users.map((user: any) => (
                   <div key={user.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start">
+                    <div className="flex justify-between items-start gap-2">
                       <div>
                         <h3 className="font-semibold text-lg">
                           {user.firstName} {user.lastName}
@@ -141,7 +185,7 @@ export function UsersPage() {
                         <p className="text-sm text-gray-600">{user.email}</p>
                         <p className="text-sm text-gray-500">{user.phoneNumber}</p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right shrink-0">
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {user.role}
                         </span>
@@ -157,6 +201,38 @@ export function UsersPage() {
                               Inactive
                             </span>
                           )}
+                        </div>
+                        <div className="mt-2 flex flex-col gap-1 items-end">
+                          {canOversight ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setOversightUser({
+                                  id: user.id,
+                                  label: `${user.firstName} ${user.lastName} (${user.email})`,
+                                })
+                              }
+                            >
+                              Sessions &amp; logins
+                            </Button>
+                          ) : null}
+                          {canResetPassword ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setResetPasswordUser({
+                                  id: user.id,
+                                  label: `${user.firstName} ${user.lastName} (${user.email})`,
+                                })
+                              }
+                            >
+                              Set password
+                            </Button>
+                          ) : null}
                         </div>
                       </div>
                     </div>
@@ -179,29 +255,49 @@ export function UsersPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {roles.map((role: any) => (
-                <div key={role.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-semibold text-lg">{role.name}</h3>
-                      <p className="text-sm text-gray-600">{role.description}</p>
+            {rolesPending ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center justify-between gap-4 rounded-lg border p-4">
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <Skeleton className="h-5 w-36" />
+                      <Skeleton className="h-4 max-w-[220px]" />
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setSelectedRole(role);
-                        setShowRolePermissions(true);
-                      }}
-                    >
-                      <Settings className="h-4 w-4 mr-1" />
-                      Manage
-                    </Button>
+                    <Skeleton className="h-8 w-[5.5rem] shrink-0" />
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : roles.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                No roles yet. Click <span className="font-medium text-foreground">Add Role</span> to create one, then attach
+                permissions (or use <span className="font-medium text-foreground">Users → Permissions</span> for the full
+                matrix).
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {roles.map((role: any) => (
+                  <div key={role.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-semibold text-lg">{role.name}</h3>
+                        <p className="text-sm text-gray-600">{role.description}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedRole(role);
+                          setShowRolePermissions(true);
+                        }}
+                      >
+                        <Settings className="h-4 w-4 mr-1" />
+                        Manage
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -326,6 +422,26 @@ export function UsersPage() {
           onClose={() => setShowRolePermissions(false)}
         />
       )}
+
+      {oversightUser ? (
+        <UserSecurityOversightModal
+          open
+          userId={oversightUser.id}
+          displayName={oversightUser.label}
+          onClose={() => setOversightUser(null)}
+        />
+      ) : null}
+
+      {resetPasswordUser ? (
+        <AdminResetPasswordModal
+          open
+          userId={resetPasswordUser.id}
+          displayName={resetPasswordUser.label}
+          onClose={() => setResetPasswordUser(null)}
+        />
+      ) : null}
+        </>
+      ) : null}
     </div>
   );
 }

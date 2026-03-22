@@ -1,22 +1,22 @@
+using System.Security.Claims;
+using System.Threading.RateLimiting;
 using IdentityService.Application;
 using IdentityService.Repositories;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Shared.Common.Extensions;
 using Shared.Common.Middleware;
-using System.Text;
+using Shared.Common.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Serilog
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .CreateLogger();
 
 builder.Host.UseSerilog();
 
-// Services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -42,33 +42,25 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// JWT Authentication
-var jwtSecret = builder.Configuration["JwtSettings:SecretKey"]!;
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret)),
-            ValidateIssuer = false,
-            ValidateAudience = false
-        };
-    });
+builder.Services.AddDataProtection();
 
-// Dependency Injection
+builder.Services.AddDigitalHospitalJwtAuthentication(builder.Configuration);
+builder.Services.AddDigitalHospitalPermissionAuthorization();
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
-builder.Services.AddScoped<IUserRepository>(sp => new UserRepository(connectionString));
-builder.Services.AddScoped<IRoleRepository>(sp => new RoleRepository(connectionString));
-builder.Services.AddScoped<IRefreshTokenRepository>(sp => new RefreshTokenRepository(connectionString));
-builder.Services.AddScoped<ILoginAuditRepository>(sp => new LoginAuditRepository(connectionString));
-builder.Services.AddScoped<IAuthService>(sp => new AuthService(
-    sp.GetRequiredService<IUserRepository>(),
-    sp.GetRequiredService<IRoleRepository>(),
-    sp.GetRequiredService<IRefreshTokenRepository>(),
-    sp.GetRequiredService<ILoginAuditRepository>(),
-    jwtSecret
-));
+builder.Services.AddScoped<IUserRepository>(_ => new UserRepository(connectionString));
+builder.Services.AddScoped<IRoleRepository>(_ => new RoleRepository(connectionString));
+builder.Services.AddScoped<IRefreshTokenRepository>(_ => new RefreshTokenRepository(connectionString));
+builder.Services.AddScoped<ILoginAuditRepository>(_ => new LoginAuditRepository(connectionString));
+builder.Services.AddScoped<IPasswordPolicyRepository>(_ => new PasswordPolicyRepository(connectionString));
+builder.Services.AddScoped<ITenantRepository>(_ => new TenantRepository(connectionString));
+builder.Services.AddScoped<IUserMfaRepository>(_ => new UserMfaRepository(connectionString));
+
+builder.Services.AddScoped<ISecurityService, SecurityService>();
+builder.Services.AddScoped<IMfaService, MfaService>();
+builder.Services.AddScoped<ITenantService, TenantService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<Shared.Common.Services.IDatabaseMigrationService>(sp =>
 {
@@ -85,16 +77,79 @@ builder.Services.AddCors(options =>
     });
 });
 
+var rlAuth = builder.Configuration.GetSection("RateLimiting:Auth");
+var windowMinutes = Math.Max(1, rlAuth.GetValue("WindowMinutes", 1));
+var loginPerMinute = Math.Max(1, rlAuth.GetValue("LoginPermitLimit", 20));
+var refreshPerMinute = Math.Max(1, rlAuth.GetValue("RefreshPermitLimit", 120));
+var changePasswordPerMinute = Math.Max(1, rlAuth.GetValue("ChangePasswordPermitLimit", 15));
+var rateLimitWindow = TimeSpan.FromMinutes(windowMinutes);
+var retryAfterSeconds = (int)Math.Ceiling(rateLimitWindow.TotalSeconds);
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("auth-login", httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(
+            $"login:{ip}",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = loginPerMinute,
+                Window = rateLimitWindow,
+                QueueLimit = 0,
+            });
+    });
+
+    options.AddPolicy("auth-refresh", httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(
+            $"refresh:{ip}",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = refreshPerMinute,
+                Window = rateLimitWindow,
+                QueueLimit = 0,
+            });
+    });
+
+    options.AddPolicy("auth-change-password", httpContext =>
+    {
+        var userId = httpContext.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var key = !string.IsNullOrEmpty(userId)
+            ? $"change-pw:user:{userId}"
+            : $"change-pw:ip:{httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"}";
+        return RateLimitPartition.GetFixedWindowLimiter(
+            key,
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = changePasswordPerMinute,
+                Window = rateLimitWindow,
+                QueueLimit = 0,
+            });
+    });
+
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        context.HttpContext.Response.Headers.Append("Retry-After", retryAfterSeconds.ToString());
+        context.HttpContext.Response.ContentType = "application/json";
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            ApiResponse<object?>.ErrorResponse("Too many requests. Please try again shortly."),
+            cancellationToken);
+    };
+});
+
 var app = builder.Build();
 
-// Run database migrations
 using (var scope = app.Services.CreateScope())
 {
     var migrationService = scope.ServiceProvider.GetRequiredService<Shared.Common.Services.IDatabaseMigrationService>();
     await migrationService.RunMigrationsAsync();
 }
 
-// Middleware
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<RequestTrackingMiddleware>();
 
@@ -107,6 +162,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.MapControllers();
 
 app.Run();

@@ -356,6 +356,12 @@ public class OptimizedPatientService : IPatientService
             PolicyNumber = request.PolicyNumber,
             ValidFrom = request.ValidFrom,
             ValidTo = request.ValidTo,
+            ConsentTermsAccepted = request.ConsentTermsAccepted,
+            ConsentPrivacyAccepted = request.ConsentPrivacyAccepted,
+            ConsentHealthDataSharing = request.ConsentHealthDataSharing,
+            ConsentRecordedAt = request.ConsentTermsAccepted && request.ConsentPrivacyAccepted && request.ConsentHealthDataSharing
+                ? DateTime.UtcNow
+                : null,
             RegisteredBy = userId,
             CreatedBy = userId
         };
@@ -423,6 +429,10 @@ public class OptimizedPatientService : IPatientService
             PolicyNumber = patient.PolicyNumber,
             ValidFrom = patient.ValidFrom,
             ValidTo = patient.ValidTo,
+            ConsentTermsAccepted = patient.ConsentTermsAccepted,
+            ConsentPrivacyAccepted = patient.ConsentPrivacyAccepted,
+            ConsentHealthDataSharing = patient.ConsentHealthDataSharing,
+            ConsentRecordedAt = patient.ConsentRecordedAt,
             RegistrationDate = patient.RegistrationDate,
             Status = patient.Status,
             VisitCount = patient.VisitCount

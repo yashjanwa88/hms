@@ -16,7 +16,9 @@ public interface IRevenueSummaryRepository : IBaseRepository<RevenueSummary>
 
 public class RevenueSummaryRepository : BaseRepository<RevenueSummary>, IRevenueSummaryRepository
 {
-    public RevenueSummaryRepository(string connectionString) : base(connectionString, "analytics_revenue_summary") { }
+    protected override string TableName => "analytics_revenue_summary";
+
+    public RevenueSummaryRepository(string connectionString) : base(connectionString) { }
 
     public async Task<List<RevenueSummary>> GetDailyRevenueAsync(DateTime fromDate, DateTime toDate, Guid tenantId)
     {
@@ -89,7 +91,9 @@ public interface IDoctorPerformanceRepository : IBaseRepository<DoctorPerformanc
 
 public class DoctorPerformanceRepository : BaseRepository<DoctorPerformance>, IDoctorPerformanceRepository
 {
-    public DoctorPerformanceRepository(string connectionString) : base(connectionString, "analytics_doctor_performance") { }
+    protected override string TableName => "analytics_doctor_performance";
+
+    public DoctorPerformanceRepository(string connectionString) : base(connectionString) { }
 
     public async Task<List<DoctorPerformance>> GetPerformanceAsync(DateTime fromDate, DateTime toDate, Guid tenantId)
     {
@@ -142,7 +146,9 @@ public interface IInsuranceSummaryRepository : IBaseRepository<InsuranceSummary>
 
 public class InsuranceSummaryRepository : BaseRepository<InsuranceSummary>, IInsuranceSummaryRepository
 {
-    public InsuranceSummaryRepository(string connectionString) : base(connectionString, "analytics_insurance_summary") { }
+    protected override string TableName => "analytics_insurance_summary";
+
+    public InsuranceSummaryRepository(string connectionString) : base(connectionString) { }
 
     public async Task<List<InsuranceSummary>> GetSummaryAsync(DateTime fromDate, DateTime toDate, Guid tenantId)
     {
@@ -220,7 +226,9 @@ public interface IPatientSummaryRepository : IBaseRepository<PatientSummary>
 
 public class PatientSummaryRepository : BaseRepository<PatientSummary>, IPatientSummaryRepository
 {
-    public PatientSummaryRepository(string connectionString) : base(connectionString, "analytics_patient_summary") { }
+    protected override string TableName => "analytics_patient_summary";
+
+    public PatientSummaryRepository(string connectionString) : base(connectionString) { }
 
     public async Task<List<PatientSummary>> GetSummaryAsync(DateTime fromDate, DateTime toDate, Guid tenantId)
     {
@@ -272,7 +280,9 @@ public interface IEventOffsetRepository : IBaseRepository<EventOffset>
 
 public class EventOffsetRepository : BaseRepository<EventOffset>, IEventOffsetRepository
 {
-    public EventOffsetRepository(string connectionString) : base(connectionString, "analytics_event_offsets") { }
+    protected override string TableName => "analytics_event_offsets";
+
+    public EventOffsetRepository(string connectionString) : base(connectionString) { }
 
     public async Task<bool> IsEventProcessedAsync(string eventType, string eventId, Guid tenantId)
     {

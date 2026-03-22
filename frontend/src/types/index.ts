@@ -4,6 +4,10 @@ export interface User {
   email: string;
   role: string;
   tenantCode?: string;
+  /** RBAC codes from IdentityService (mirrors JWT <code>permission</code> claims). */
+  permissions?: string[];
+  /** Optional; also stored at auth slice level for gating. */
+  forcePasswordChangeRequired?: boolean;
 }
 
 export interface AuthState {
@@ -11,6 +15,10 @@ export interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
+  /** Denormalized from login for UI gating (same as <code>user.permissions</code>). */
+  permissions: string[];
+  /** When true, user must complete change-password before other routes (mirrors Identity <code>force_password_change</code>). */
+  forcePasswordChangeRequired: boolean;
 }
 
 export interface LoginRequest {
@@ -22,6 +30,8 @@ export interface LoginResponse {
   success: boolean;
   message: string;
   data: {
+    mfaRequired?: boolean;
+    mfaChallengeToken?: string;
     accessToken: string;
     refreshToken: string;
     userId: string;
@@ -29,6 +39,8 @@ export interface LoginResponse {
     email: string;
     role: string;
     expiresAt: string;
+    permissions?: string[];
+    forcePasswordChange?: boolean;
   };
 }
 

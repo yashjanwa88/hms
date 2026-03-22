@@ -1,10 +1,9 @@
 using BillingService.Application;
 using BillingService.Repositories;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Shared.Common.Authorization;
+using Shared.Common.Extensions;
 using Shared.Common.Middleware;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,20 +34,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-var jwtSecret = builder.Configuration["JwtSettings:SecretKey"]!;
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret)),
-            ValidateIssuer = false,
-            ValidateAudience = false
-        };
-    });
-
-builder.Services.AddAuthorization();
+builder.Services.AddDigitalHospitalJwtAuthentication(builder.Configuration);
+builder.Services.AddDigitalHospitalPermissionAuthorization();
 
 builder.Services.AddCors(options =>
 {
@@ -65,7 +52,7 @@ builder.Services.AddScoped<IReportsRepository>(provider =>
     new ReportsRepository(connectionString!));
 builder.Services.AddScoped<IReportsService, ReportsService>();
 builder.Services.AddScoped<Shared.Common.Services.IAuditClient, Shared.Common.Services.AuditClient>();
-builder.Services.AddScoped<Shared.Common.Authorization.IPermissionService, Shared.Common.Services.PermissionService>();
+builder.Services.AddScoped<IPermissionService, Shared.Common.Services.PermissionService>();
 
 builder.Services.AddScoped<Shared.Common.Services.IDatabaseMigrationService>(sp =>
 {

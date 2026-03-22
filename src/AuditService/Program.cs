@@ -1,7 +1,10 @@
 using AuditService.Application;
 using AuditService.Repositories;
 using Microsoft.OpenApi.Models;
+using Shared.Common.Authorization;
+using Shared.Common.Extensions;
 using Shared.Common.Middleware;
+using Shared.Common.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +35,10 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddDigitalHospitalJwtAuthentication(builder.Configuration);
+builder.Services.AddDigitalHospitalPermissionAuthorization();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -40,7 +47,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddScoped<IAuditRepository>(provider => 
+builder.Services.AddScoped<IAuditRepository>(provider =>
     new AuditRepository(builder.Configuration));
 builder.Services.AddScoped<IAuditAppService, AuditAppService>();
 
@@ -69,6 +76,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowAll");
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

@@ -3,6 +3,7 @@ using AnalyticsService.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Common.Models;
+using Shared.Common.Authorization;
 
 namespace AnalyticsService.Controllers;
 
@@ -19,7 +20,7 @@ public class AnalyticsController : ControllerBase
     }
 
     [HttpGet("revenue/daily")]
-    [Authorize(Roles = "HospitalAdmin,Accountant")]
+    [RequirePermission("analytics.financial")]
     public async Task<IActionResult> GetDailyRevenue([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
     {
         try
@@ -36,7 +37,7 @@ public class AnalyticsController : ControllerBase
     }
 
     [HttpGet("revenue/monthly")]
-    [Authorize(Roles = "HospitalAdmin,Accountant")]
+    [RequirePermission("analytics.financial")]
     public async Task<IActionResult> GetMonthlyRevenue([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
     {
         try
@@ -53,7 +54,7 @@ public class AnalyticsController : ControllerBase
     }
 
     [HttpGet("revenue/yearly")]
-    [Authorize(Roles = "HospitalAdmin,Accountant")]
+    [RequirePermission("analytics.financial")]
     public async Task<IActionResult> GetYearlyRevenue([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
     {
         try
@@ -70,7 +71,7 @@ public class AnalyticsController : ControllerBase
     }
 
     [HttpGet("doctors/performance")]
-    [Authorize(Roles = "HospitalAdmin,Doctor")]
+    [RequirePermission("analytics.clinical")]
     public async Task<IActionResult> GetDoctorPerformance([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
     {
         try
@@ -87,7 +88,7 @@ public class AnalyticsController : ControllerBase
     }
 
     [HttpGet("insurance/summary")]
-    [Authorize(Roles = "HospitalAdmin,Accountant")]
+    [RequirePermission("analytics.financial")]
     public async Task<IActionResult> GetInsuranceSummary([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
     {
         try
@@ -104,7 +105,7 @@ public class AnalyticsController : ControllerBase
     }
 
     [HttpGet("insurance/approval-rate")]
-    [Authorize(Roles = "HospitalAdmin,Accountant")]
+    [RequirePermission("analytics.financial")]
     public async Task<IActionResult> GetInsuranceApprovalRate()
     {
         try
@@ -121,7 +122,7 @@ public class AnalyticsController : ControllerBase
     }
 
     [HttpGet("patients/summary")]
-    [Authorize(Roles = "HospitalAdmin,Doctor")]
+    [RequirePermission("analytics.clinical")]
     public async Task<IActionResult> GetPatientSummary([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
     {
         try
@@ -138,7 +139,7 @@ public class AnalyticsController : ControllerBase
     }
 
     [HttpGet("dashboard")]
-    [Authorize(Roles = "HospitalAdmin,Accountant,Doctor")]
+    [RequirePermission("analytics.dashboard")]
     public async Task<IActionResult> GetDashboard()
     {
         try

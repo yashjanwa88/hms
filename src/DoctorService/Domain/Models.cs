@@ -17,6 +17,8 @@ public class Doctor : BaseEntity
     public int ExperienceYears { get; set; }
     public string Department { get; set; } = string.Empty;
     public decimal ConsultationFee { get; set; }
+    public int MaxPatientsPerDay { get; set; } = 20;
+    public string? ProfilePicturePath { get; set; }
     public bool IsActive { get; set; }
     public string EmergencyContactName { get; set; } = string.Empty;
     public string EmergencyContactNumber { get; set; } = string.Empty;

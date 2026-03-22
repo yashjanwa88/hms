@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Common.Models;
 using Dapper;
@@ -7,6 +8,7 @@ namespace PatientService.Controllers;
 
 [ApiController]
 [Route("api/dashboard")]
+[Authorize]
 public class DashboardController : ControllerBase
 {
     private readonly IConfiguration _configuration;
@@ -37,41 +39,51 @@ public class DashboardController : ControllerBase
         }
 
         // Encounter Stats
-        using (var conn = new NpgsqlConnection("Host=localhost;Port=5432;Database=encounter_db;Username=postgres;Password=yash@9588"))
+        var encounterConnStr = _configuration.GetConnectionString("EncounterConnection");
+        if (!string.IsNullOrEmpty(encounterConnStr))
         {
-            var sql = @"
-                SELECT 
-                    COUNT(*) FILTER (WHERE is_deleted = false) as TotalEncounters,
-                    COUNT(*) FILTER (WHERE DATE(encounter_date) = CURRENT_DATE AND is_deleted = false) as TodayVisits,
-                    COUNT(*) FILTER (WHERE status = 'Active' AND is_deleted = false) as ActiveEncounters
-                FROM encounters WHERE tenant_id = @TenantId";
-            
-            var result = await conn.QueryFirstOrDefaultAsync<dynamic>(sql, new { TenantId = tenantId });
-            summary.TotalEncounters = result?.totalencounters ?? 0;
-            summary.TodayVisits = result?.todayvisits ?? 0;
-            summary.ActiveEncounters = result?.activeencounters ?? 0;
+            try
+            {
+                using var conn = new NpgsqlConnection(encounterConnStr);
+                var sql = @"
+                    SELECT
+                        COUNT(*) FILTER (WHERE is_deleted = false) as TotalEncounters,
+                        COUNT(*) FILTER (WHERE DATE(encounter_date) = CURRENT_DATE AND is_deleted = false) as TodayVisits,
+                        COUNT(*) FILTER (WHERE status = 'Active' AND is_deleted = false) as ActiveEncounters
+                    FROM encounters WHERE tenant_id = @TenantId";
+                var result = await conn.QueryFirstOrDefaultAsync<dynamic>(sql, new { TenantId = tenantId });
+                summary.TotalEncounters = result?.totalencounters ?? 0;
+                summary.TodayVisits = result?.todayvisits ?? 0;
+                summary.ActiveEncounters = result?.activeencounters ?? 0;
+            }
+            catch { /* Encounter service unavailable */ }
         }
 
         // Billing Stats
-        using (var conn = new NpgsqlConnection("Host=localhost;Port=5432;Database=billing_db;Username=postgres;Password=yash@9588"))
+        var billingConnStr = _configuration.GetConnectionString("BillingConnection");
+        if (!string.IsNullOrEmpty(billingConnStr))
+        using (var conn = new NpgsqlConnection(billingConnStr))
         {
-            var sql = @"
-                SELECT 
-                    COUNT(*) FILTER (WHERE is_deleted = false) as TotalInvoices,
-                    COALESCE(SUM(grand_total) FILTER (WHERE is_deleted = false), 0) as TotalRevenue,
-                    COALESCE(SUM(grand_total) FILTER (WHERE DATE(created_at) = CURRENT_DATE AND is_deleted = false), 0) as TodayRevenue,
-                    COALESCE(SUM(paid_amount) FILTER (WHERE is_deleted = false), 0) as TotalCollected,
-                    COALESCE(SUM(grand_total - paid_amount) FILTER (WHERE status != 'Paid' AND is_deleted = false), 0) as PendingAmount,
-                    COUNT(*) FILTER (WHERE status = 'Pending' AND is_deleted = false) as PendingInvoices
-                FROM invoices WHERE tenant_id = @TenantId";
-            
-            var result = await conn.QueryFirstOrDefaultAsync<dynamic>(sql, new { TenantId = tenantId });
-            summary.TotalInvoices = result?.totalinvoices ?? 0;
-            summary.TotalRevenue = result?.totalrevenue ?? 0;
-            summary.TodayRevenue = result?.todayrevenue ?? 0;
-            summary.TotalCollected = result?.totalcollected ?? 0;
-            summary.PendingAmount = result?.pendingamount ?? 0;
-            summary.PendingInvoices = result?.pendinginvoices ?? 0;
+            try
+            {
+                var sql = @"
+                    SELECT
+                        COUNT(*) FILTER (WHERE is_deleted = false) as TotalInvoices,
+                        COALESCE(SUM(grand_total) FILTER (WHERE is_deleted = false), 0) as TotalRevenue,
+                        COALESCE(SUM(grand_total) FILTER (WHERE DATE(created_at) = CURRENT_DATE AND is_deleted = false), 0) as TodayRevenue,
+                        COALESCE(SUM(paid_amount) FILTER (WHERE is_deleted = false), 0) as TotalCollected,
+                        COALESCE(SUM(grand_total - paid_amount) FILTER (WHERE status != 'Paid' AND is_deleted = false), 0) as PendingAmount,
+                        COUNT(*) FILTER (WHERE status = 'Pending' AND is_deleted = false) as PendingInvoices
+                    FROM invoices WHERE tenant_id = @TenantId";
+                var result = await conn.QueryFirstOrDefaultAsync<dynamic>(sql, new { TenantId = tenantId });
+                summary.TotalInvoices = result?.totalinvoices ?? 0;
+                summary.TotalRevenue = result?.totalrevenue ?? 0;
+                summary.TodayRevenue = result?.todayrevenue ?? 0;
+                summary.TotalCollected = result?.totalcollected ?? 0;
+                summary.PendingAmount = result?.pendingamount ?? 0;
+                summary.PendingInvoices = result?.pendinginvoices ?? 0;
+            }
+            catch { /* Billing service unavailable */ }
         }
 
         return Ok(new ApiResponse<object>

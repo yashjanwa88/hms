@@ -35,6 +35,10 @@ public class CreatePatientRequest
     public string? PolicyNumber { get; set; }
     public DateTime? ValidFrom { get; set; }
     public DateTime? ValidTo { get; set; }
+
+    public bool ConsentTermsAccepted { get; set; }
+    public bool ConsentPrivacyAccepted { get; set; }
+    public bool ConsentHealthDataSharing { get; set; }
 }
 
 public class UpdatePatientRequest
@@ -73,6 +77,10 @@ public class UpdatePatientRequest
     public DateTime? ValidFrom { get; set; }
     public DateTime? ValidTo { get; set; }
     public string Status { get; set; } = "Active";
+
+    public bool? ConsentTermsAccepted { get; set; }
+    public bool? ConsentPrivacyAccepted { get; set; }
+    public bool? ConsentHealthDataSharing { get; set; }
 }
 
 public class PatientSearchRequest
@@ -119,6 +127,11 @@ public class PatientResponse
     public string? PolicyNumber { get; set; }
     public DateTime? ValidFrom { get; set; }
     public DateTime? ValidTo { get; set; }
+
+    public bool ConsentTermsAccepted { get; set; }
+    public bool ConsentPrivacyAccepted { get; set; }
+    public bool ConsentHealthDataSharing { get; set; }
+    public DateTime? ConsentRecordedAt { get; set; }
     
     public DateTime RegistrationDate { get; set; }
     public string Status { get; set; } = "Active";

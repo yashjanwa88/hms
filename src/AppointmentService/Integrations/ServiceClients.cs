@@ -8,6 +8,7 @@ public interface IDoctorServiceClient
 {
     Task<DoctorDto?> GetDoctorAsync(Guid doctorId, Guid tenantId, string token);
     Task<List<DoctorAvailabilityDto>> GetDoctorAvailabilityAsync(Guid doctorId, Guid tenantId, string token);
+    Task<List<DoctorDto>> SearchDoctorsAsync(string? specialization, Guid tenantId, string token);
 }
 
 public class DoctorServiceClient : IDoctorServiceClient
@@ -64,6 +65,33 @@ public class DoctorServiceClient : IDoctorServiceClient
         catch
         {
             return new List<DoctorAvailabilityDto>();
+        }
+    }
+
+    public async Task<List<DoctorDto>> SearchDoctorsAsync(string? specialization, Guid tenantId, string token)
+    {
+        try
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            _httpClient.DefaultRequestHeaders.Add("X-Tenant-Id", tenantId.ToString());
+
+            var url = $"{_baseUrl}/api/doctor/v1/doctors/search?status=Active";
+            if (!string.IsNullOrEmpty(specialization))
+                url += $"&specialization={Uri.EscapeDataString(specialization)}";
+
+            var response = await _httpClient.GetAsync(url);
+            
+            if (!response.IsSuccessStatusCode)
+                return new List<DoctorDto>();
+
+            var content = await response.Content.ReadAsStringAsync();
+            var apiResponse = JsonSerializer.Deserialize<ApiResponseWrapper<List<DoctorDto>>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            
+            return apiResponse?.Data ?? new List<DoctorDto>();
+        }
+        catch
+        {
+            return new List<DoctorDto>();
         }
     }
 }

@@ -8,7 +8,7 @@ using Shared.Common.Authorization;
 namespace PatientService.Controllers;
 
 [ApiController]
-[Route("api/patients")]
+[Route("api/patients/v2")]
 [Authorize]
 public class OptimizedPatientController : ControllerBase
 {
@@ -22,7 +22,7 @@ public class OptimizedPatientController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist")]
+    [RequirePermission("patient.create")]
     public async Task<IActionResult> CreatePatient([FromBody] CreatePatientRequest request)
     {
         var requestId = HttpContext.TraceIdentifier;
@@ -56,7 +56,7 @@ public class OptimizedPatientController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    [AllowAnonymous] // Allow internal service calls
+    [RequirePermission("patient.view")]
     public async Task<IActionResult> GetPatientById(Guid id)
     {
         var requestId = HttpContext.TraceIdentifier;
@@ -86,7 +86,7 @@ public class OptimizedPatientController : ControllerBase
     }
 
     [HttpGet("uhid/{uhid}")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist,Accountant")]
+    [RequirePermission("patient.view")]
     public async Task<IActionResult> GetPatientByUHID(string uhid)
     {
         var requestId = HttpContext.TraceIdentifier;
@@ -116,7 +116,7 @@ public class OptimizedPatientController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist")]
+    [RequirePermission("patient.update")]
     public async Task<IActionResult> UpdatePatient(Guid id, [FromBody] UpdatePatientRequest request)
     {
         var requestId = HttpContext.TraceIdentifier;
@@ -147,7 +147,7 @@ public class OptimizedPatientController : ControllerBase
     }
 
     [HttpGet("search")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist,Accountant")]
+    [RequirePermission("patient.view")]
     public async Task<IActionResult> SearchPatients([FromQuery] PatientSearchRequest request)
     {
         var requestId = HttpContext.TraceIdentifier;
@@ -213,7 +213,7 @@ public class OptimizedPatientController : ControllerBase
     }
 
     [HttpPost("check-duplicates")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist")]
+    [RequirePermission("patient.view")]
     public async Task<IActionResult> CheckDuplicates([FromBody] CreatePatientRequest request)
     {
         var requestId = HttpContext.TraceIdentifier;
@@ -281,7 +281,7 @@ public class OptimizedPatientController : ControllerBase
     }
 
     [HttpGet("stats")]
-    [Authorize(Roles = "Admin,HospitalAdmin")]
+    [RequirePermission("patient.view")]
     public async Task<IActionResult> GetStats()
     {
         var requestId = HttpContext.TraceIdentifier;

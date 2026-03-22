@@ -68,16 +68,35 @@ public class DoctorRepository : BaseRepository<Doctor>, IDoctorRepository
             parameters.Add("Department", $"%{request.Department}%");
         }
 
+        if (!string.IsNullOrEmpty(request.Specialization))
+        {
+            whereClause += " AND EXISTS (SELECT 1 FROM doctor_specializations ds WHERE ds.doctor_id = doctors.id AND ds.specialization_name ILIKE @Specialization AND ds.is_deleted = false)";
+            parameters.Add("Specialization", $"%{request.Specialization}%");
+        }
+
+        if (!string.IsNullOrEmpty(request.Status))
+        {
+            if (request.Status.Equals("Active", StringComparison.OrdinalIgnoreCase))
+            {
+                whereClause += " AND is_active = true";
+            }
+            else if (request.Status.Equals("Inactive", StringComparison.OrdinalIgnoreCase))
+            {
+                whereClause += " AND is_active = false";
+            }
+        }
+
         if (request.IsActive.HasValue)
         {
             whereClause += " AND is_active = @IsActive";
             parameters.Add("IsActive", request.IsActive.Value);
         }
 
-        if (!string.IsNullOrEmpty(request.SearchTerm))
+        var searchTerm = !string.IsNullOrEmpty(request.Search) ? request.Search : request.SearchTerm;
+        if (!string.IsNullOrEmpty(searchTerm))
         {
-            whereClause += " AND (first_name ILIKE @SearchTerm OR last_name ILIKE @SearchTerm OR doctor_code ILIKE @SearchTerm)";
-            parameters.Add("SearchTerm", $"%{request.SearchTerm}%");
+            whereClause += " AND (first_name ILIKE @SearchTerm OR last_name ILIKE @SearchTerm OR doctor_code ILIKE @SearchTerm OR email ILIKE @SearchTerm)";
+            parameters.Add("SearchTerm", $"%{searchTerm}%");
         }
 
         var offset = (request.PageNumber - 1) * request.PageSize;

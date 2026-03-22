@@ -3,6 +3,7 @@ using InsuranceService.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Common.Models;
+using Shared.Common.Authorization;
 using System.Security.Claims;
 
 namespace InsuranceService.Controllers;
@@ -20,7 +21,7 @@ public class InsuranceController : ControllerBase
     }
 
     [HttpPost("providers")]
-    [Authorize(Roles = "HospitalAdmin,Accountant")]
+    [RequirePermission("insurance.provider.create")]
     public async Task<IActionResult> CreateProvider([FromBody] CreateProviderRequest request)
     {
         try
@@ -38,7 +39,7 @@ public class InsuranceController : ControllerBase
     }
 
     [HttpGet("providers")]
-    [Authorize(Roles = "HospitalAdmin,Accountant,Receptionist,Doctor,Nurse")]
+    [RequirePermission("insurance.view")]
     public async Task<IActionResult> GetProviders()
     {
         try
@@ -55,7 +56,7 @@ public class InsuranceController : ControllerBase
     }
 
     [HttpPost("policies")]
-    [Authorize(Roles = "Receptionist,Accountant")]
+    [RequirePermission("insurance.policy.create")]
     public async Task<IActionResult> CreatePolicy([FromBody] CreatePolicyRequest request)
     {
         try
@@ -74,7 +75,7 @@ public class InsuranceController : ControllerBase
     }
 
     [HttpGet("policies/by-patient/{patientId}")]
-    [Authorize(Roles = "Receptionist,Accountant,Doctor,Nurse")]
+    [RequirePermission("insurance.view")]
     public async Task<IActionResult> GetPoliciesByPatient(Guid patientId)
     {
         try
@@ -92,7 +93,7 @@ public class InsuranceController : ControllerBase
     }
 
     [HttpPost("preauth")]
-    [Authorize(Roles = "Doctor,Nurse")]
+    [RequirePermission("insurance.preauth.create")]
     public async Task<IActionResult> CreatePreAuth([FromBody] CreatePreAuthRequest request)
     {
         try
@@ -112,7 +113,7 @@ public class InsuranceController : ControllerBase
     }
 
     [HttpGet("preauth/{id}")]
-    [Authorize(Roles = "Doctor,Nurse,Accountant")]
+    [RequirePermission("insurance.view")]
     public async Task<IActionResult> GetPreAuth(Guid id)
     {
         try
@@ -132,7 +133,7 @@ public class InsuranceController : ControllerBase
     }
 
     [HttpPost("preauth/{id}/approve")]
-    [Authorize(Roles = "Accountant,HospitalAdmin")]
+    [RequirePermission("insurance.preauth.approve")]
     public async Task<IActionResult> ApprovePreAuth(Guid id, [FromBody] ApprovePreAuthRequest request)
     {
         try
@@ -152,7 +153,7 @@ public class InsuranceController : ControllerBase
     }
 
     [HttpPost("preauth/{id}/reject")]
-    [Authorize(Roles = "Accountant,HospitalAdmin")]
+    [RequirePermission("insurance.preauth.approve")]
     public async Task<IActionResult> RejectPreAuth(Guid id, [FromBody] RejectPreAuthRequest request)
     {
         try
@@ -172,7 +173,7 @@ public class InsuranceController : ControllerBase
     }
 
     [HttpPost("claims")]
-    [Authorize(Roles = "Accountant,Receptionist")]
+    [RequirePermission("insurance.claim.create")]
     public async Task<IActionResult> CreateClaim([FromBody] CreateClaimRequest request)
     {
         try
@@ -192,7 +193,7 @@ public class InsuranceController : ControllerBase
     }
 
     [HttpGet("claims/{id}")]
-    [Authorize(Roles = "Accountant,Receptionist,Doctor,Nurse")]
+    [RequirePermission("insurance.view")]
     public async Task<IActionResult> GetClaim(Guid id)
     {
         try
@@ -212,7 +213,7 @@ public class InsuranceController : ControllerBase
     }
 
     [HttpGet("claims/by-invoice/{invoiceId}")]
-    [Authorize(Roles = "Accountant,Receptionist")]
+    [RequirePermission("insurance.view")]
     public async Task<IActionResult> GetClaimsByInvoice(Guid invoiceId)
     {
         try
@@ -230,7 +231,7 @@ public class InsuranceController : ControllerBase
     }
 
     [HttpPost("claims/{id}/update-status")]
-    [Authorize(Roles = "Accountant,HospitalAdmin")]
+    [RequirePermission("insurance.claim.admin")]
     public async Task<IActionResult> UpdateClaimStatus(Guid id, [FromBody] UpdateClaimStatusRequest request)
     {
         try
@@ -250,7 +251,7 @@ public class InsuranceController : ControllerBase
     }
 
     [HttpPost("claims/{id}/settle")]
-    [Authorize(Roles = "Accountant")]
+    [RequirePermission("insurance.claim.settle")]
     public async Task<IActionResult> SettleClaim(Guid id, [FromBody] SettleClaimRequest request)
     {
         try

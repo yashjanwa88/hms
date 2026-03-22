@@ -47,6 +47,11 @@ public class PatientRegistrationService : IPatientRegistrationService
             throw new ArgumentException("Invalid date of birth");
         }
 
+        if (!request.ConsentTermsAccepted || !request.ConsentPrivacyAccepted || !request.ConsentHealthDataSharing)
+        {
+            throw new ArgumentException("All consent declarations must be accepted to register a patient.");
+        }
+
         // Check for duplicates
         var duplicates = await _repository.CheckDuplicatesAsync(
             tenantId,
@@ -97,6 +102,11 @@ public class PatientRegistrationService : IPatientRegistrationService
             PolicyNumber = request.PolicyNumber,
             ValidFrom = request.ValidFrom,
             ValidTo = request.ValidTo,
+
+            ConsentTermsAccepted = request.ConsentTermsAccepted,
+            ConsentPrivacyAccepted = request.ConsentPrivacyAccepted,
+            ConsentHealthDataSharing = request.ConsentHealthDataSharing,
+            ConsentRecordedAt = DateTime.UtcNow,
             
             RegisteredBy = registeredBy,
             CreatedBy = registeredBy

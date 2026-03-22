@@ -1,10 +1,9 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
-using System.Text;
 using VisitService.Application;
 using VisitService.Repositories;
+using Shared.Common.Authorization;
+using Shared.Common.Extensions;
 using Shared.Common.Middleware;
 using Shared.Common.Services;
 using Shared.EventBus.Interfaces;
@@ -59,21 +58,9 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// JWT Authentication
-var jwtSecret = builder.Configuration["JwtSettings:SecretKey"]!;
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-            ValidateIssuer = false,
-            ValidateAudience = false
-        };
-    });
-
-builder.Services.AddAuthorization();
+builder.Services.AddDigitalHospitalJwtAuthentication(builder.Configuration);
+builder.Services.AddDigitalHospitalPermissionAuthorization();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
 
 // Database Configuration
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 

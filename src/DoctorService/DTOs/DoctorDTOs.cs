@@ -14,6 +14,8 @@ public class CreateDoctorRequest
     public int ExperienceYears { get; set; }
     public string Department { get; set; } = string.Empty;
     public decimal ConsultationFee { get; set; }
+    public int MaxPatientsPerDay { get; set; } = 20;
+    public string? ProfilePicturePath { get; set; }
     public string EmergencyContactName { get; set; } = string.Empty;
     public string EmergencyContactNumber { get; set; } = string.Empty;
 }
@@ -32,6 +34,8 @@ public class UpdateDoctorRequest
     public int ExperienceYears { get; set; }
     public string Department { get; set; } = string.Empty;
     public decimal ConsultationFee { get; set; }
+    public int MaxPatientsPerDay { get; set; } = 20;
+    public string? ProfilePicturePath { get; set; }
     public bool IsActive { get; set; }
     public string EmergencyContactName { get; set; } = string.Empty;
     public string EmergencyContactNumber { get; set; } = string.Empty;
@@ -39,10 +43,12 @@ public class UpdateDoctorRequest
 
 public class DoctorSearchRequest
 {
+    public string? Search { get; set; }
     public string? SearchTerm { get; set; }
     public string? DoctorCode { get; set; }
     public string? Department { get; set; }
     public string? Specialization { get; set; }
+    public string? Status { get; set; }
     public bool? IsActive { get; set; }
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 10;
@@ -67,6 +73,8 @@ public class DoctorResponse
     public int ExperienceYears { get; set; }
     public string Department { get; set; } = string.Empty;
     public decimal ConsultationFee { get; set; }
+    public int MaxPatientsPerDay { get; set; }
+    public string? ProfilePicturePath { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
 }

@@ -6,6 +6,7 @@ import { store } from './store';
 import { Layout } from './components/layout/Layout';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { LoginPage } from './features/auth/pages/LoginPage';
+import { ChangePasswordPage } from './features/auth/pages/ChangePasswordPage';
 import { DashboardPage } from './features/dashboard/pages/DashboardPage';
 import { EMRPage } from './features/emr/pages/EMRPage';
 import { EncounterDetailPage } from './features/emr/pages/EncounterDetailPage';
@@ -17,6 +18,18 @@ import { PatientsPage } from './features/patients/pages/PatientsPage';
 import { PatientProfilePage } from './features/patients/pages/PatientProfilePage';
 import { EditPatientPage } from './features/patients/pages/EditPatientPage';
 import { PatientHistoryPage } from './features/patients/pages/PatientHistoryPage';
+import { PatientRegistrationPage } from './features/patients/pages/PatientRegistrationPage';
+import { PatientMastersPage } from './features/patients/pages/PatientMastersPage';
+import { PatientDocumentsPage } from './features/patients/pages/PatientDocumentsPage';
+import { PatientDashboardPage } from './features/patients/pages/PatientDashboardPage';
+import { PatientMergePage } from './features/patients/pages/PatientMergePage';
+import { WalkInPatientPage } from './features/patients/pages/WalkInPatientPage';
+import { PatientQueuePage } from './features/patients/pages/PatientQueuePage';
+import { PatientRenewalPage } from './features/patients/pages/PatientRenewalPage';
+import { PatientExportImportPage } from './features/patients/pages/PatientExportImportPage';
+import { PatientCardReprintPage } from './features/patients/pages/PatientCardReprintPage';
+import { PatientAuditLogPage } from './features/patients/pages/PatientAuditLogPage';
+import { PatientBarcodeGeneratorPage } from './features/patients/pages/PatientBarcodeGeneratorPage';
 import { VisitsPage } from './features/visits/pages/VisitsPage';
 import { VisitDetailPage } from './features/visits/pages/VisitDetailPage';
 import { CreateEncounterPage } from './features/encounters/pages/CreateEncounterPage';
@@ -49,6 +62,14 @@ function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route
+              path="/change-password"
+              element={
+                <ProtectedRoute>
+                  <ChangePasswordPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/"
               element={
                 <ProtectedRoute>
@@ -71,15 +92,28 @@ function App() {
               <Route path="doctors/:id/edit" element={<EditDoctorPage />} />
               <Route path="appointments" element={<AppointmentsPage />} />
               <Route path="patients" element={<PatientsPage />} />
+              <Route path="patients/dashboard" element={<PatientDashboardPage />} />
+              <Route path="patients/register" element={<PatientRegistrationPage />} />
+              <Route path="patients/walk-in" element={<WalkInPatientPage />} />
+              <Route path="patients/merge" element={<PatientMergePage />} />
+              <Route path="patients/queue" element={<PatientQueuePage />} />
+              <Route path="patients/renewal" element={<PatientRenewalPage />} />
+              <Route path="patients/export-import" element={<PatientExportImportPage />} />
+              <Route path="patients/card-reprint" element={<PatientCardReprintPage />} />
+              <Route path="patients/audit-log" element={<PatientAuditLogPage />} />
+              <Route path="patients/barcode" element={<PatientBarcodeGeneratorPage />} />
+              <Route path="patients/masters" element={<PatientMastersPage />} />
               <Route path="patients/:id" element={<PatientProfilePage />} />
               <Route path="patients/:id/edit" element={<EditPatientPage />} />
               <Route path="patients/:id/history" element={<PatientHistoryPage />} />
+              <Route path="patients/:id/documents" element={<PatientDocumentsPage />} />
               <Route path="visits" element={<VisitsPage />} />
               <Route path="visits/:id" element={<VisitDetailPage />} />
               <Route path="encounters/create" element={<CreateEncounterPage />} />
               <Route path="billing/invoices/:id" element={<InvoiceDetailPage />} />
               <Route path="audit" element={<AuditLogsPage />} />
               <Route path="users" element={<UsersPage />} />
+              <Route path="users/permissions" element={<PermissionsPage />} />
             </Route>
           </Routes>
         </BrowserRouter>

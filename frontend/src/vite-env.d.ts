@@ -14,3 +14,13 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+import 'axios';
+
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    /** When true, 401 responses do not trigger automatic refresh (avoids loops on auth endpoints). */
+    skipAuthRefresh?: boolean;
+    _retry?: boolean;
+  }
+}

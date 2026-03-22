@@ -16,6 +16,7 @@ public interface IAppointmentRepository
     Task<string> GenerateAppointmentNumberAsync(Guid tenantId, string tenantCode);
     Task<bool> HasConflictingAppointmentAsync(Guid doctorId, DateTime date, TimeSpan startTime, TimeSpan endTime, Guid tenantId, Guid? excludeAppointmentId = null);
     Task<List<Appointment>> GetDoctorAppointmentsForDateAsync(Guid doctorId, DateTime date, Guid tenantId);
+    Task<int> GetDoctorAppointmentCountForDateAsync(Guid doctorId, DateTime date, Guid tenantId);
 }
 
 public class AppointmentRepository : BaseRepository<Appointment>, IAppointmentRepository
@@ -23,6 +24,22 @@ public class AppointmentRepository : BaseRepository<Appointment>, IAppointmentRe
     protected override string TableName => "appointments";
 
     public AppointmentRepository(string connectionString) : base(connectionString) { }
+
+    public override async Task<Appointment?> GetByIdAsync(Guid id, Guid tenantId)
+    {
+        using var connection = CreateConnection();
+        var sql = @"SELECT 
+            id as Id, tenant_id as TenantId, appointment_number as AppointmentNumber,
+            patient_id as PatientId, doctor_id as DoctorId, appointment_date as AppointmentDate,
+            start_time as StartTime, end_time as EndTime, status as Status,
+            appointment_type as AppointmentType, reason as Reason, notes as Notes,
+            check_in_time as CheckInTime, completed_time as CompletedTime,
+            cancellation_reason as CancellationReason, cancelled_by as CancelledBy,
+            cancelled_at as CancelledAt, created_at as CreatedAt, created_by as CreatedBy,
+            updated_at as UpdatedAt, updated_by as UpdatedBy, is_deleted as IsDeleted
+            FROM appointments WHERE id = @Id AND tenant_id = @TenantId AND is_deleted = false";
+        return await connection.QueryFirstOrDefaultAsync<Appointment>(sql, new { Id = id, TenantId = tenantId });
+    }
 
     public async Task<PagedResult<Appointment>> SearchAsync(AppointmentSearchRequest request, Guid tenantId)
     {
@@ -71,7 +88,16 @@ public class AppointmentRepository : BaseRepository<Appointment>, IAppointmentRe
         var offset = (request.PageNumber - 1) * request.PageSize;
         var orderBy = $"ORDER BY {request.SortBy} {request.SortOrder}";
 
-        var sql = $"SELECT * FROM appointments {whereClause} {orderBy} LIMIT @PageSize OFFSET @Offset";
+        var sql = $@"SELECT 
+            id as Id, tenant_id as TenantId, appointment_number as AppointmentNumber,
+            patient_id as PatientId, doctor_id as DoctorId, appointment_date as AppointmentDate,
+            start_time as StartTime, end_time as EndTime, status as Status,
+            appointment_type as AppointmentType, reason as Reason, notes as Notes,
+            check_in_time as CheckInTime, completed_time as CompletedTime,
+            cancellation_reason as CancellationReason, cancelled_by as CancelledBy,
+            cancelled_at as CancelledAt, created_at as CreatedAt, created_by as CreatedBy,
+            updated_at as UpdatedAt, updated_by as UpdatedBy, is_deleted as IsDeleted
+            FROM appointments {whereClause} {orderBy} LIMIT @PageSize OFFSET @Offset";
         var countSql = $"SELECT COUNT(*) FROM appointments {whereClause}";
 
         parameters.Add("PageSize", request.PageSize);
@@ -156,6 +182,21 @@ public class AppointmentRepository : BaseRepository<Appointment>, IAppointmentRe
 
         var result = await connection.QueryAsync<Appointment>(sql, new { DoctorId = doctorId, TenantId = tenantId, Date = date.Date });
         return result.ToList();
+    }
+
+    public async Task<int> GetDoctorAppointmentCountForDateAsync(Guid doctorId, DateTime date, Guid tenantId)
+    {
+        using var connection = CreateConnection();
+        
+        var sql = @"
+            SELECT COUNT(*) FROM appointments 
+            WHERE doctor_id = @DoctorId 
+            AND tenant_id = @TenantId 
+            AND appointment_date = @Date
+            AND status NOT IN ('Cancelled')
+            AND is_deleted = false";
+
+        return await connection.ExecuteScalarAsync<int>(sql, new { DoctorId = doctorId, TenantId = tenantId, Date = date.Date });
     }
 }
 

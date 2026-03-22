@@ -14,6 +14,8 @@ public interface IUserRepository
     Task<IEnumerable<User>> GetAllByTenantAsync(Guid tenantId);
     Task<bool> IncrementFailedAttemptsAsync(Guid userId, Guid tenantId, int maxAttempts, int lockoutMinutes);
     Task<bool> ResetFailedAttemptsAsync(Guid userId, Guid tenantId);
+    Task<bool> UpdatePasswordHashAsync(Guid userId, Guid tenantId, string passwordHash);
+    Task<bool> AdminSetPasswordAsync(Guid userId, Guid tenantId, string passwordHash, bool forcePasswordChangeOnNextLogin);
 }
 
 public class UserRepository : BaseRepository<User>, IUserRepository
@@ -65,7 +67,7 @@ public class UserRepository : BaseRepository<User>, IUserRepository
                 failed_login_attempts = failed_login_attempts + 1,
                 locked_until = CASE 
                     WHEN failed_login_attempts + 1 >= @MaxAttempts 
-                    THEN NOW() + INTERVAL '@LockoutMinutes minutes'
+                    THEN NOW() + make_interval(mins => @LockoutMinutes)
                     ELSE locked_until 
                 END,
                 updated_at = NOW()
@@ -92,5 +94,41 @@ public class UserRepository : BaseRepository<User>, IUserRepository
         
         var result = await connection.ExecuteAsync(sql, new { UserId = userId, TenantId = tenantId });
         return result > 0;
+    }
+
+    public async Task<bool> UpdatePasswordHashAsync(Guid userId, Guid tenantId, string passwordHash)
+    {
+        using var connection = CreateConnection();
+        var sql = @"
+            UPDATE users SET 
+                password_hash = @PasswordHash,
+                password_changed_at = NOW(),
+                force_password_change = FALSE,
+                updated_at = NOW()
+            WHERE id = @UserId AND tenant_id = @TenantId";
+        var result = await connection.ExecuteAsync(sql, new { UserId = userId, TenantId = tenantId, PasswordHash = passwordHash });
+        return result > 0;
+    }
+
+    public async Task<bool> AdminSetPasswordAsync(Guid userId, Guid tenantId, string passwordHash, bool forcePasswordChangeOnNextLogin)
+    {
+        using var connection = CreateConnection();
+        const string sql = @"
+            UPDATE users SET
+                password_hash = @PasswordHash,
+                password_changed_at = NOW(),
+                force_password_change = @ForcePasswordChange,
+                failed_login_attempts = 0,
+                locked_until = NULL,
+                updated_at = NOW()
+            WHERE id = @UserId AND tenant_id = @TenantId AND is_deleted = false";
+        var n = await connection.ExecuteAsync(sql, new
+        {
+            UserId = userId,
+            TenantId = tenantId,
+            PasswordHash = passwordHash,
+            ForcePasswordChange = forcePasswordChangeOnNextLogin
+        });
+        return n > 0;
     }
 }

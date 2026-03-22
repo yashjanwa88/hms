@@ -66,6 +66,19 @@ public class AppointmentAppService : IAppointmentService
             throw new Exception("Doctor not found");
         }
 
+        // Set default MaxPatientsPerDay if 0
+        if (doctor.MaxPatientsPerDay == 0)
+        {
+            doctor.MaxPatientsPerDay = 20;
+        }
+
+        // Check daily appointment limit
+        var todayAppointmentCount = await _appointmentRepository.GetDoctorAppointmentCountForDateAsync(request.DoctorId, request.AppointmentDate, tenantId);
+        if (todayAppointmentCount >= doctor.MaxPatientsPerDay)
+        {
+            throw new Exception($"Doctor has reached maximum appointments limit ({doctor.MaxPatientsPerDay}) for this date");
+        }
+
         // Check for conflicting appointments
         if (await _appointmentRepository.HasConflictingAppointmentAsync(request.DoctorId, request.AppointmentDate, request.StartTime, request.EndTime, tenantId))
         {
@@ -120,6 +133,20 @@ public class AppointmentAppService : IAppointmentService
             AppointmentDate = appointment.AppointmentDate,
             StartTime = appointment.StartTime
         });
+
+        if (request.SendNotification)
+        {
+            _eventBus.Publish(new AppointmentNotificationEvent
+            {
+                TenantId = tenantId,
+                AppointmentId = appointment.Id,
+                PatientId = appointment.PatientId,
+                DoctorId = appointment.DoctorId,
+                AppointmentDate = appointment.AppointmentDate,
+                StartTime = appointment.StartTime,
+                NotificationType = "SMS_EMAIL_CONFIRMATION"
+            });
+        }
 
         return new AppointmentResponse
         {

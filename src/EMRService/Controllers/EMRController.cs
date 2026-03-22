@@ -2,6 +2,7 @@ using EMRService.Application;
 using EMRService.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Common.Authorization;
 
 namespace EMRService.Controllers;
 
@@ -25,6 +26,7 @@ public class EMRController : ControllerBase
     private Guid DoctorId => Guid.Parse(User.FindFirst("DoctorId")?.Value ?? UserId.ToString());
 
     [HttpPost("encounters")]
+    [RequirePermission("encounter.create")]
     public async Task<IActionResult> CreateEncounter([FromBody] CreateEncounterRequest request)
     {
         try
@@ -40,6 +42,7 @@ public class EMRController : ControllerBase
     }
 
     [HttpGet("encounters/{id}")]
+    [RequirePermission("encounter.view")]
     public async Task<IActionResult> GetEncounter(Guid id)
     {
         try
@@ -56,6 +59,7 @@ public class EMRController : ControllerBase
     }
 
     [HttpGet("encounters/by-patient/{patientId}")]
+    [RequirePermission("encounter.view")]
     public async Task<IActionResult> GetPatientEncounters(Guid patientId)
     {
         try
@@ -71,6 +75,7 @@ public class EMRController : ControllerBase
     }
 
     [HttpPost("encounters/{id}/close")]
+    [RequirePermission("encounter.update")]
     public async Task<IActionResult> CloseEncounter(Guid id)
     {
         try
@@ -86,6 +91,7 @@ public class EMRController : ControllerBase
     }
 
     [HttpPost("encounters/{id}/notes")]
+    [RequirePermission("encounter.update")]
     public async Task<IActionResult> AddClinicalNote(Guid id, [FromBody] CreateClinicalNoteRequest request)
     {
         try
@@ -101,6 +107,7 @@ public class EMRController : ControllerBase
     }
 
     [HttpGet("encounters/{id}/notes")]
+    [RequirePermission("encounter.view")]
     public async Task<IActionResult> GetClinicalNotes(Guid id)
     {
         try
@@ -116,6 +123,7 @@ public class EMRController : ControllerBase
     }
 
     [HttpPost("encounters/{id}/vitals")]
+    [RequirePermission("encounter.update")]
     public async Task<IActionResult> AddVital(Guid id, [FromBody] CreateVitalRequest request)
     {
         try
@@ -131,6 +139,7 @@ public class EMRController : ControllerBase
     }
 
     [HttpGet("encounters/{id}/vitals")]
+    [RequirePermission("encounter.view")]
     public async Task<IActionResult> GetVitals(Guid id)
     {
         try
@@ -146,6 +155,7 @@ public class EMRController : ControllerBase
     }
 
     [HttpPost("encounters/{id}/diagnosis")]
+    [RequirePermission("encounter.update")]
     public async Task<IActionResult> AddDiagnosis(Guid id, [FromBody] CreateDiagnosisRequest request)
     {
         try
@@ -161,6 +171,7 @@ public class EMRController : ControllerBase
     }
 
     [HttpGet("encounters/{id}/diagnosis")]
+    [RequirePermission("encounter.view")]
     public async Task<IActionResult> GetDiagnoses(Guid id)
     {
         try
@@ -176,6 +187,7 @@ public class EMRController : ControllerBase
     }
 
     [HttpPost("patients/{patientId}/allergies")]
+    [RequirePermission("encounter.update")]
     public async Task<IActionResult> AddAllergy(Guid patientId, [FromBody] CreateAllergyRequest request)
     {
         try
@@ -191,6 +203,7 @@ public class EMRController : ControllerBase
     }
 
     [HttpGet("patients/{patientId}/allergies")]
+    [RequirePermission("encounter.view")]
     public async Task<IActionResult> GetAllergies(Guid patientId)
     {
         try
@@ -206,6 +219,7 @@ public class EMRController : ControllerBase
     }
 
     [HttpPost("encounters/{id}/procedures")]
+    [RequirePermission("encounter.update")]
     public async Task<IActionResult> AddProcedure(Guid id, [FromBody] CreateProcedureRequest request)
     {
         try
@@ -221,6 +235,7 @@ public class EMRController : ControllerBase
     }
 
     [HttpGet("encounters/{id}/procedures")]
+    [RequirePermission("encounter.view")]
     public async Task<IActionResult> GetProcedures(Guid id)
     {
         try

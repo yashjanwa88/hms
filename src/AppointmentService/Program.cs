@@ -1,10 +1,9 @@
 using AppointmentService.Application;
 using AppointmentService.Integrations;
 using AppointmentService.Repositories;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Shared.Common.Extensions;
 using Shared.Common.Middleware;
 using Shared.EventBus;
 using Shared.EventBus.Interfaces;
@@ -44,21 +43,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// JWT Authentication
-var jwtSecret = builder.Configuration["JwtSettings:SecretKey"]!;
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret)),
-            ValidateIssuer = false,
-            ValidateAudience = false
-        };
-    });
-
-builder.Services.AddAuthorization();
+builder.Services.AddDigitalHospitalJwtAuthentication(builder.Configuration);
+builder.Services.AddDigitalHospitalPermissionAuthorization();
 
 // Redis (Optional)
 var redisConnection = builder.Configuration["Redis:ConnectionString"];
@@ -73,12 +59,20 @@ var rabbitMQHost = builder.Configuration["RabbitMQ:HostName"];
 if (!string.IsNullOrEmpty(rabbitMQHost))
 {
     try { builder.Services.AddSingleton<IEventBus>(new RabbitMQEventBus(rabbitMQHost)); }
-    catch { Log.Warning("RabbitMQ unavailable. Continuing without RabbitMQ."); }
+    catch { 
+        Log.Warning("RabbitMQ unavailable. Continuing without RabbitMQ.");
+        builder.Services.AddSingleton<IEventBus>(new NoOpEventBus());
+    }
+}
+else
+{
+    builder.Services.AddSingleton<IEventBus>(new NoOpEventBus());
 }
 
 // HttpClient for service integrations
 builder.Services.AddHttpClient<IDoctorServiceClient, DoctorServiceClient>();
 builder.Services.AddHttpClient<IPatientServiceClient, PatientServiceClient>();
+builder.Services.AddHttpClient();
 
 // Repositories
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
@@ -88,6 +82,8 @@ builder.Services.AddScoped<IAppointmentSlotLockRepository>(sp => new Appointment
 
 // Services
 builder.Services.AddScoped<IAppointmentService, AppointmentAppService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<Shared.Common.Authorization.IPermissionService, Shared.Common.Services.PermissionService>();
 builder.Services.AddScoped<Shared.Common.Services.IDatabaseMigrationService>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();

@@ -43,6 +43,12 @@ public class Patient : BaseEntity
     public string? PolicyNumber { get; set; }
     public DateTime? ValidFrom { get; set; }
     public DateTime? ValidTo { get; set; }
+
+    // Consent (registration / updates)
+    public bool ConsentTermsAccepted { get; set; }
+    public bool ConsentPrivacyAccepted { get; set; }
+    public bool ConsentHealthDataSharing { get; set; }
+    public DateTime? ConsentRecordedAt { get; set; }
     
     // System
     public DateTime RegistrationDate { get; set; }

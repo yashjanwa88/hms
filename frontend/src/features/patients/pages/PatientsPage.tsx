@@ -8,16 +8,48 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { patientService } from '../services/patientService';
 import { QuickRegisterModal } from '../components/QuickRegisterModal';
+import { PatientRegistrationForm } from '../components/PatientRegistrationForm';
 import { PatientSearch } from '../components/PatientSearch';
-import { Plus, X, Zap, Eye } from 'lucide-react';
+import { Plus, X, Zap, Eye, Settings, BarChart3, GitMerge, Clock, RefreshCw, FileSpreadsheet, CreditCard, History, QrCode } from 'lucide-react';
 import { toast } from 'sonner';
+
+type Gender = 'Male' | 'Female' | 'Other';
+
+type PatientFormData = {
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  gender: Gender;
+  dateOfBirth: string;
+  bloodGroup: string;
+  maritalStatus: string;
+  mobileNumber: string;
+  alternateMobile: string;
+  email: string;
+  whatsAppNumber: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  state: string;
+  pincode: string;
+  country: string;
+  allergiesSummary: string;
+  chronicConditions: string;
+  currentMedications: string;
+  disabilityStatus: string;
+  organDonor: boolean;
+  emergencyContactName: string;
+  emergencyContactRelation: string;
+  emergencyContactMobile: string;
+};
 
 export function PatientsPage() {
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
+  const [showFullForm, setShowFullForm] = useState(false);
   const [showQuickRegister, setShowQuickRegister] = useState(false);
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<PatientFormData>({
     firstName: '',
     middleName: '',
     lastName: '',
@@ -116,19 +148,65 @@ export function PatientsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Patients</h1>
-        <div className="flex gap-2">
-          <Button onClick={() => setShowQuickRegister(true)} variant="outline">
-            <Zap className="mr-2 h-4 w-4" />
-            Quick Register
+        <div className="flex gap-2 flex-wrap">
+          <Button onClick={() => navigate('/patients/dashboard')} variant="outline" size="sm">
+            <BarChart3 className="mr-2 h-4 w-4" />
+            Dashboard
           </Button>
-          <Button onClick={() => setShowForm(!showForm)}>
-            {showForm ? <X className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
-            {showForm ? 'Cancel' : 'Full Registration'}
+          <Button onClick={() => navigate('/patients/queue')} variant="outline" size="sm">
+            <Clock className="mr-2 h-4 w-4" />
+            Queue
+          </Button>
+          <Button onClick={() => navigate('/patients/renewal')} variant="outline" size="sm">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Renewal
+          </Button>
+          <Button onClick={() => navigate('/patients/merge')} variant="outline" size="sm">
+            <GitMerge className="mr-2 h-4 w-4" />
+            Merge
+          </Button>
+          <Button onClick={() => navigate('/patients/export-import')} variant="outline" size="sm">
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Export/Import
+          </Button>
+          <Button onClick={() => navigate('/patients/card-reprint')} variant="outline" size="sm">
+            <CreditCard className="mr-2 h-4 w-4" />
+            Card Reprint
+          </Button>
+          <Button onClick={() => navigate('/patients/audit-log')} variant="outline" size="sm">
+            <History className="mr-2 h-4 w-4" />
+            Audit Log
+          </Button>
+          <Button onClick={() => navigate('/patients/barcode')} variant="outline" size="sm">
+            <QrCode className="mr-2 h-4 w-4" />
+            Barcode/QR
+          </Button>
+          <Button onClick={() => navigate('/patients/masters')} variant="outline" size="sm">
+            <Settings className="mr-2 h-4 w-4" />
+            Masters
+          </Button>
+          <Button onClick={() => navigate('/patients/walk-in')} variant="outline" size="sm">
+            <Zap className="mr-2 h-4 w-4" />
+            Walk-in
+          </Button>
+          <Button onClick={() => navigate('/patients/register')} size="sm">
+            <Plus className="mr-2 h-4 w-4" />
+            New Patient
           </Button>
         </div>
       </div>
 
       {showQuickRegister && <QuickRegisterModal onClose={() => setShowQuickRegister(false)} />}
+      
+      {showFullForm && (
+        <PatientRegistrationForm
+          onSubmit={(data) => {
+            createMutation.mutate(data);
+            setShowFullForm(false);
+          }}
+          onCancel={() => setShowFullForm(false)}
+        />
+      )}
 
       {showForm && (
         <Card>
@@ -154,7 +232,7 @@ export function PatientsPage() {
               </div>
               <div>
                 <Label>Gender *</Label>
-                <select className="w-full border rounded px-3 py-2" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} required>
+                <select className="w-full border rounded px-3 py-2" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value as Gender })} required>
                   <option>Male</option>
                   <option>Female</option>
                   <option>Other</option>

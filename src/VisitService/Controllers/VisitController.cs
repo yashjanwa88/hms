@@ -22,7 +22,7 @@ public class VisitController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist")]
+    [RequirePermission("encounter.create")]
     public async Task<IActionResult> CreateVisit([FromBody] CreateVisitRequest request)
     {
         try
@@ -43,7 +43,7 @@ public class VisitController : ControllerBase
     }
 
     [HttpPost("emergency")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse")]
+    [RequirePermission("encounter.create")]
     public async Task<IActionResult> CreateEmergencyVisit([FromBody] EmergencyVisitRequest request)
     {
         try
@@ -64,7 +64,7 @@ public class VisitController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist")]
+    [RequirePermission("encounter.view")]
     public async Task<IActionResult> GetVisitById(Guid id)
     {
         try
@@ -85,7 +85,7 @@ public class VisitController : ControllerBase
     }
 
     [HttpGet("number/{visitNumber}")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist")]
+    [RequirePermission("encounter.view")]
     public async Task<IActionResult> GetVisitByNumber(string visitNumber)
     {
         try
@@ -106,7 +106,7 @@ public class VisitController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse")]
+    [RequirePermission("encounter.update")]
     public async Task<IActionResult> UpdateVisit(Guid id, [FromBody] UpdateVisitRequest request)
     {
         try
@@ -129,7 +129,7 @@ public class VisitController : ControllerBase
     }
 
     [HttpPost("{id}/checkin")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist")]
+    [RequirePermission("encounter.update")]
     public async Task<IActionResult> CheckInVisit(Guid id)
     {
         try
@@ -152,7 +152,7 @@ public class VisitController : ControllerBase
     }
 
     [HttpPost("{id}/checkout")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse")]
+    [RequirePermission("encounter.update")]
     public async Task<IActionResult> CheckOutVisit(Guid id)
     {
         try
@@ -175,7 +175,7 @@ public class VisitController : ControllerBase
     }
 
     [HttpGet("search")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist")]
+    [RequirePermission("encounter.view")]
     public async Task<IActionResult> SearchVisits([FromQuery] VisitSearchRequest request)
     {
         try
@@ -193,7 +193,7 @@ public class VisitController : ControllerBase
     }
 
     [HttpGet("patient/{patientId}/history")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse")]
+    [RequirePermission("encounter.view")]
     public async Task<IActionResult> GetPatientVisitHistory(Guid patientId)
     {
         try
@@ -234,7 +234,7 @@ public class VisitController : ControllerBase
     }
 
     [HttpGet("active")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist")]
+    [RequirePermission("encounter.view")]
     public async Task<IActionResult> GetActiveVisits()
     {
         try
@@ -252,7 +252,7 @@ public class VisitController : ControllerBase
     }
 
     [HttpGet("{id}/timeline")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse")]
+    [RequirePermission("encounter.view")]
     public async Task<IActionResult> GetVisitTimeline(Guid id)
     {
         try
@@ -270,7 +270,7 @@ public class VisitController : ControllerBase
     }
 
     [HttpGet("stats")]
-    [Authorize(Roles = "Admin,HospitalAdmin")]
+    [RequirePermission("encounter.view")]
     public async Task<IActionResult> GetStats()
     {
         try

@@ -38,7 +38,7 @@ public class DoctorController : ControllerBase
         }
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:guid}")]
     [RequirePermission("doctor.view")]
     public async Task<ActionResult<ApiResponse<DoctorResponse>>> GetDoctor(
         Guid id,
@@ -104,7 +104,7 @@ public class DoctorController : ControllerBase
         }
     }
 
-    [HttpGet]
+    [HttpGet("search")]
     [RequirePermission("doctor.view")]
     public async Task<ActionResult<ApiResponse<PagedResult<DoctorResponse>>>> SearchDoctors(
         [FromQuery] DoctorSearchRequest request,
@@ -121,8 +121,25 @@ public class DoctorController : ControllerBase
         }
     }
 
+    [HttpGet]
+    [RequirePermission("doctor.view")]
+    public async Task<ActionResult<ApiResponse<PagedResult<DoctorResponse>>>> GetAllDoctors(
+        [FromQuery] DoctorSearchRequest request,
+        [FromHeader(Name = "X-Tenant-Id")] Guid tenantId)
+    {
+        try
+        {
+            var result = await _doctorService.SearchDoctorsAsync(request, tenantId);
+            return Ok(ApiResponse<PagedResult<DoctorResponse>>.SuccessResponse(result, "Doctors retrieved successfully"));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ApiResponse<PagedResult<DoctorResponse>>.ErrorResponse(ex.Message));
+        }
+    }
+
     [HttpPost("{id}/specializations")]
-    [Authorize(Roles = "HospitalAdmin,SuperAdmin,Admin")]
+    [RequirePermission("doctor.update")]
     public async Task<ActionResult<ApiResponse<Guid>>> AddSpecialization(
         Guid id,
         [FromBody] AddSpecializationRequest request,
@@ -141,7 +158,7 @@ public class DoctorController : ControllerBase
     }
 
     [HttpPost("{id}/qualifications")]
-    [Authorize(Roles = "HospitalAdmin,SuperAdmin,Admin")]
+    [RequirePermission("doctor.update")]
     public async Task<ActionResult<ApiResponse<Guid>>> AddQualification(
         Guid id,
         [FromBody] AddQualificationRequest request,
@@ -160,7 +177,7 @@ public class DoctorController : ControllerBase
     }
 
     [HttpPost("{id}/availability")]
-    [Authorize(Roles = "Doctor,HospitalAdmin,SuperAdmin")]
+    [RequirePermission("doctor.schedule.manage")]
     public async Task<ActionResult<ApiResponse<Guid>>> AddAvailability(
         Guid id,
         [FromBody] AddAvailabilityRequest request,
@@ -179,7 +196,7 @@ public class DoctorController : ControllerBase
     }
 
     [HttpGet("{id}/availability")]
-    [Authorize(Roles = "Doctor,Nurse,Receptionist,HospitalAdmin,SuperAdmin")]
+    [RequirePermission("doctor.view")]
     public async Task<ActionResult<ApiResponse<IEnumerable<AvailabilityResponse>>>> GetAvailability(
         Guid id,
         [FromHeader(Name = "X-Tenant-Id")] Guid tenantId)
@@ -196,7 +213,7 @@ public class DoctorController : ControllerBase
     }
 
     [HttpPost("{id}/leave")]
-    [Authorize(Roles = "Doctor,HospitalAdmin,SuperAdmin")]
+    [RequirePermission("doctor.schedule.manage")]
     public async Task<ActionResult<ApiResponse<Guid>>> AddLeave(
         Guid id,
         [FromBody] AddLeaveRequest request,

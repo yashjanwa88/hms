@@ -1,38 +1,39 @@
 using Dapper;
+using Microsoft.Extensions.Configuration;
 using Npgsql;
 using Shared.Common.Authorization;
-using Microsoft.Extensions.Configuration;
 
 namespace Shared.Common.Services;
 
 public class PermissionService : IPermissionService
 {
-    private readonly string _identityConnectionString;
+    private readonly string? _identityConnectionString;
 
     public PermissionService(IConfiguration configuration)
     {
-        _identityConnectionString = configuration.GetConnectionString("IdentityConnection") 
-            ?? "Host=localhost;Port=5432;Database=identity_db;Username=postgres;Password=yash@9588";
+        _identityConnectionString = configuration.GetConnectionString("IdentityConnection");
     }
 
-    public async Task<bool> HasPermissionAsync(Guid userId, string permissionCode)
+    public async Task<bool> HasPermissionAsync(Guid userId, Guid tenantId, string permissionCode)
     {
-        using var conn = new NpgsqlConnection(_identityConnectionString);
+        if (string.IsNullOrWhiteSpace(_identityConnectionString))
+            return false;
 
-        var sql = @"
+        await using var conn = new NpgsqlConnection(_identityConnectionString);
+
+        const string sql = @"
             SELECT EXISTS(
-                SELECT 1 
+                SELECT 1
                 FROM permissions p
-                INNER JOIN role_permissions rp ON p.id = rp.permission_id
-                INNER JOIN users u ON rp.role_id = u.role_id
-                WHERE u.id = @UserId 
-                    AND p.code = @PermissionCode
-                    AND p.is_deleted = false 
-                    AND rp.is_deleted = false
-                    AND u.is_deleted = false
-                    AND u.is_active = true
+                INNER JOIN role_permissions rp ON p.id = rp.permission_id AND rp.is_deleted = false
+                INNER JOIN users u ON rp.role_id = u.role_id AND u.is_deleted = false AND u.is_active = true
+                WHERE u.id = @UserId
+                  AND u.tenant_id = @TenantId
+                  AND p.code = @PermissionCode
+                  AND p.is_deleted = false
             )";
 
-        return await conn.ExecuteScalarAsync<bool>(sql, new { UserId = userId, PermissionCode = permissionCode });
+        return await conn.ExecuteScalarAsync<bool>(sql,
+            new { UserId = userId, TenantId = tenantId, PermissionCode = permissionCode });
     }
 }

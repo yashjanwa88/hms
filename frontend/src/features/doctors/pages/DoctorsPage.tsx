@@ -30,7 +30,9 @@ export function DoctorsPage() {
     email: '',
     department: '',
     gender: 'Male',
-    consultationFee: 0
+    consultationFee: 0,
+    maxPatientsPerDay: 20,
+    profilePicture: null as File | null
   });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -47,7 +49,7 @@ export function DoctorsPage() {
     onSuccess: () => {
       toast.success('Doctor added successfully');
       setShowModal(false);
-      setFormData({ firstName: '', lastName: '', mobileNumber: '', email: '', department: '', gender: 'Male', consultationFee: 0 });
+      setFormData({ firstName: '', lastName: '', mobileNumber: '', email: '', department: '', gender: 'Male', consultationFee: 0, maxPatientsPerDay: 20, profilePicture: null });
       queryClient.invalidateQueries({ queryKey: ['doctors'] });
     },
     onError: () => {
@@ -158,6 +160,16 @@ export function DoctorsPage() {
                   <Label>Consultation Fee</Label>
                   <Input type="number" required
                     value={formData.consultationFee} onChange={(e) => setFormData({...formData, consultationFee: Number(e.target.value)})} />
+                </div>
+                <div>
+                  <Label>Max Patients Per Day</Label>
+                  <Input type="number" required min="1" max="100"
+                    value={formData.maxPatientsPerDay || 20} onChange={(e) => setFormData({...formData, maxPatientsPerDay: Number(e.target.value)})} />
+                </div>
+                <div>
+                  <Label>Profile Picture</Label>
+                  <Input type="file" accept="image/*"
+                    onChange={(e) => setFormData({...formData, profilePicture: e.target.files?.[0]})} />
                 </div>
                 <div className="flex gap-2">
                   <Button type="submit" disabled={createMutation.isPending}>

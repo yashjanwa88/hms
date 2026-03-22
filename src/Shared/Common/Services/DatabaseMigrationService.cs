@@ -44,11 +44,14 @@ public class DatabaseMigrationService : IDatabaseMigrationService
 
     private async Task RunPendingMigrationsAsync()
     {
-        var scriptsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "scripts");
-        
+        var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        var scriptsPath = Path.Combine(baseDir, "scripts");
+        if (!Directory.Exists(scriptsPath))
+            scriptsPath = Path.Combine(baseDir, "..", "..", "..", "scripts");
+
         if (!Directory.Exists(scriptsPath))
         {
-            _logger.LogWarning("Scripts directory not found: {Path}", scriptsPath);
+            _logger.LogWarning("Scripts directory not found (tried output and project-relative paths).");
             return;
         }
 

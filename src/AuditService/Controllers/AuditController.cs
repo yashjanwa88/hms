@@ -1,12 +1,15 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using AuditService.Application;
 using AuditService.DTOs;
+using Shared.Common.Authorization;
 using Shared.Common.Models;
 
 namespace AuditService.Controllers;
 
 [ApiController]
 [Route("api/audit")]
+[Authorize]
 public class AuditController : ControllerBase
 {
     private readonly IAuditAppService _auditService;
@@ -17,6 +20,7 @@ public class AuditController : ControllerBase
     }
 
     [HttpPost("log")]
+    [AllowAnonymous]
     public async Task<IActionResult> CreateLog([FromBody] CreateAuditLogRequest request)
     {
         if (string.IsNullOrEmpty(request.ServiceName) || string.IsNullOrEmpty(request.EntityName) || string.IsNullOrEmpty(request.Action))
@@ -66,6 +70,7 @@ public class AuditController : ControllerBase
     }
 
     [HttpGet("search")]
+    [RequirePermission("audit.view")]
     public async Task<IActionResult> Search([FromQuery] AuditLogSearchRequest request)
     {
         if (request.TenantId == Guid.Empty && Request.Headers.ContainsKey("X-Tenant-Id"))
@@ -101,6 +106,7 @@ public class AuditController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [RequirePermission("audit.view")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var tenantId = Guid.Parse(Request.Headers["X-Tenant-Id"].ToString());

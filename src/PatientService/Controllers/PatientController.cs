@@ -8,7 +8,7 @@ using Shared.Common.Authorization;
 namespace PatientService.Controllers;
 
 [ApiController]
-[Route("api/patients-legacy")]
+[Route("api/patients/legacy")]
 [Authorize]
 public class PatientController : ControllerBase
 {
@@ -22,7 +22,7 @@ public class PatientController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist")]
+    [RequirePermission("patient.create")]
     public async Task<IActionResult> CreatePatient([FromBody] CreatePatientRequest request)
     {
         try
@@ -64,7 +64,7 @@ public class PatientController : ControllerBase
     }
 
     [HttpGet("uhid/{uhid}")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist,Accountant")]
+    [RequirePermission("patient.view")]
     public async Task<IActionResult> GetPatientByUHID(string uhid)
     {
         try
@@ -85,7 +85,7 @@ public class PatientController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist")]
+    [RequirePermission("patient.update")]
     public async Task<IActionResult> UpdatePatient(Guid id, [FromBody] UpdatePatientRequest request)
     {
         try
@@ -108,7 +108,7 @@ public class PatientController : ControllerBase
     }
 
     [HttpGet("search")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist,Accountant")]
+    [RequirePermission("patient.view")]
     public async Task<IActionResult> SearchPatients([FromQuery] PatientSearchRequest request)
     {
         try
@@ -149,7 +149,7 @@ public class PatientController : ControllerBase
     }
 
     [HttpPost("check-duplicates")]
-    [Authorize(Roles = "Admin,HospitalAdmin,Doctor,Nurse,Receptionist")]
+    [RequirePermission("patient.create")]
     public async Task<IActionResult> CheckDuplicates([FromBody] CreatePatientRequest request)
     {
         try
@@ -197,7 +197,7 @@ public class PatientController : ControllerBase
     }
 
     [HttpGet("stats")]
-    [Authorize(Roles = "Admin,HospitalAdmin")]
+    [RequirePermission("patient.view")]
     public async Task<IActionResult> GetStats()
     {
         try

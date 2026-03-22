@@ -2,7 +2,7 @@ using LaboratoryService.Application;
 using LaboratoryService.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Common;
+using Shared.Common.Authorization;
 using System.Security.Claims;
 
 namespace LaboratoryService.Controllers;
@@ -20,7 +20,7 @@ public class LaboratoryController : ControllerBase
     }
 
     [HttpPost("tests")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Doctor")]
+    [RequirePermission("lab.test.manage")]
     public async Task<IActionResult> CreateLabTest([FromBody] CreateLabTestRequest request)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -31,7 +31,7 @@ public class LaboratoryController : ControllerBase
     }
 
     [HttpGet("tests")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Doctor,Nurse,Receptionist,LabTechnician")]
+    [RequirePermission("lab.view")]
     public async Task<IActionResult> GetLabTests()
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -41,7 +41,7 @@ public class LaboratoryController : ControllerBase
     }
 
     [HttpGet("tests/{id}")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Doctor,Nurse,Receptionist,LabTechnician")]
+    [RequirePermission("lab.view")]
     public async Task<IActionResult> GetLabTestById(Guid id)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -51,7 +51,7 @@ public class LaboratoryController : ControllerBase
     }
 
     [HttpPost("orders")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Doctor,Nurse,Receptionist")]
+    [RequirePermission("lab.order.create")]
     public async Task<IActionResult> CreateLabOrder([FromBody] CreateLabOrderRequest request)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -63,7 +63,7 @@ public class LaboratoryController : ControllerBase
     }
 
     [HttpGet("orders/{id}")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Doctor,Nurse,Receptionist,LabTechnician")]
+    [RequirePermission("lab.view")]
     public async Task<IActionResult> GetLabOrderById(Guid id)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -73,7 +73,7 @@ public class LaboratoryController : ControllerBase
     }
 
     [HttpGet("orders/by-patient/{patientId}")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Doctor,Nurse,Receptionist,LabTechnician")]
+    [RequirePermission("lab.view")]
     public async Task<IActionResult> GetLabOrdersByPatientId(Guid patientId)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -83,7 +83,7 @@ public class LaboratoryController : ControllerBase
     }
 
     [HttpPost("orders/{id}/collect-sample")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Nurse,LabTechnician")]
+    [RequirePermission("lab.sample.collect")]
     public async Task<IActionResult> CollectSample(Guid id, [FromBody] CollectSampleRequest request)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -94,7 +94,7 @@ public class LaboratoryController : ControllerBase
     }
 
     [HttpPost("orders/{id}/cancel")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Doctor")]
+    [RequirePermission("lab.order.cancel")]
     public async Task<IActionResult> CancelLabOrder(Guid id, [FromBody] CancelLabOrderRequest request)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -105,7 +105,7 @@ public class LaboratoryController : ControllerBase
     }
 
     [HttpPost("orders/{orderId}/items/{itemId}/results")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,LabTechnician")]
+    [RequirePermission("lab.result.enter")]
     public async Task<IActionResult> EnterLabResults(Guid orderId, Guid itemId, [FromBody] EnterLabResultsRequest request)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -116,7 +116,7 @@ public class LaboratoryController : ControllerBase
     }
 
     [HttpPost("orders/{id}/complete")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,LabTechnician")]
+    [RequirePermission("lab.order.complete")]
     public async Task<IActionResult> CompleteLabOrder(Guid id)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());
@@ -127,7 +127,7 @@ public class LaboratoryController : ControllerBase
     }
 
     [HttpGet("orders/{id}/report")]
-    [Authorize(Roles = "SuperAdmin,HospitalAdmin,Doctor,Nurse,LabTechnician")]
+    [RequirePermission("lab.view")]
     public async Task<IActionResult> GetLabReport(Guid id)
     {
         var tenantId = Guid.Parse(User.FindFirst("TenantId")?.Value ?? Guid.Empty.ToString());

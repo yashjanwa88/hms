@@ -1,10 +1,9 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PatientService.Application;
 using PatientService.Repositories;
 using PatientService.Middleware;
 using Serilog;
+using Shared.Common.Extensions;
 using Shared.Common.Middleware;
 using Shared.EventBus;
 using Shared.EventBus.Interfaces;
@@ -23,6 +22,7 @@ builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 50 * 1024 * 1024); // 50MB for import
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Patient Service API", Version = "v1" });
@@ -46,21 +46,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// JWT Authentication
-var jwtSecret = builder.Configuration["JwtSettings:SecretKey"]!;
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret)),
-            ValidateIssuer = false,
-            ValidateAudience = false
-        };
-    });
-
-builder.Services.AddAuthorization();
+builder.Services.AddDigitalHospitalJwtAuthentication(builder.Configuration);
+builder.Services.AddDigitalHospitalPermissionAuthorization();
 
 // Redis Cache
 var redisConnection = builder.Configuration["Redis:ConnectionString"];
@@ -110,6 +97,11 @@ builder.Services.AddScoped<IPatientRepository>(provider =>
     new PatientRepository(connectionString));
 builder.Services.AddScoped<IInsuranceProviderRepository>(sp => new InsuranceProviderRepository(connectionString));
 builder.Services.AddScoped<IPatientRegistrationRepository>(sp => new PatientRegistrationRepository(connectionString));
+builder.Services.AddScoped<IMastersRepository>(sp => new MastersRepository(connectionString));
+builder.Services.AddScoped<IQueueRepository>(sp => new QueueRepository(connectionString));
+builder.Services.AddScoped<IRenewalRepository>(sp => new RenewalRepository(connectionString));
+builder.Services.AddScoped<ICardReprintRepository>(sp => new CardReprintRepository(connectionString));
+builder.Services.AddScoped<IAuditLogRepository>(sp => new AuditLogRepository(connectionString));
 
 // Services - Use standard service
 builder.Services.AddScoped<IPatientService, PatientAppService>();

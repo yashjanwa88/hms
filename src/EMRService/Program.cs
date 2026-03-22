@@ -1,11 +1,11 @@
 using EMRService.Application;
 using EMRService.Repositories;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Shared.Common.Authorization;
+using Shared.Common.Extensions;
+using Shared.Common.Services;
 using StackExchange.Redis;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,27 +47,9 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "YourSuperSecretKeyForJWTTokenGeneration123!";
-var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "DigitalHospital";
-var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "DigitalHospital";
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtIssuer,
-            ValidAudience = jwtAudience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-        };
-    });
-
-builder.Services.AddAuthorization();
+builder.Services.AddDigitalHospitalJwtAuthentication(builder.Configuration);
+builder.Services.AddDigitalHospitalPermissionAuthorization();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
 
 // Redis (Optional)
 var redisConnection = builder.Configuration.GetConnectionString("Redis");
@@ -97,7 +79,7 @@ builder.Services.AddScoped<IVitalRepository, VitalRepository>();
 builder.Services.AddScoped<IAllergyRepository, AllergyRepository>();
 builder.Services.AddScoped<IProcedureRepository, ProcedureRepository>();
 builder.Services.AddScoped<IEMRService, EMRService.Application.EMRService>();
-builder.Services.AddScoped<IDatabaseMigrationService, DatabaseMigrationService>();
+builder.Services.AddScoped<EMRService.Application.IDatabaseMigrationService, EMRService.Application.DatabaseMigrationService>();
 
 // CORS
 builder.Services.AddCors(options =>
@@ -163,7 +145,7 @@ app.MapControllers();
 // Run database migrations on startup
 using (var scope = app.Services.CreateScope())
 {
-    var migrationService = scope.ServiceProvider.GetRequiredService<IDatabaseMigrationService>();
+    var migrationService = scope.ServiceProvider.GetRequiredService<EMRService.Application.IDatabaseMigrationService>();
     await migrationService.RunMigrationsAsync();
 }
 
