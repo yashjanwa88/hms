@@ -139,3 +139,59 @@ public class ChangePasswordRequest
     public string CurrentPassword { get; set; } = string.Empty;
     public string NewPassword { get; set; } = string.Empty;
 }
+
+
+// Permission Management DTOs
+public class PermissionResponse
+{
+    public Guid Id { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Module { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+}
+
+public class CreatePermissionRequest
+{
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Module { get; set; } = string.Empty;
+}
+
+public class UpdatePermissionRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Module { get; set; } = string.Empty;
+}
+
+public class AssignPermissionRequest
+{
+    public Guid PermissionId { get; set; }
+}
+
+public class BulkAssignPermissionsRequest
+{
+    public List<Guid> PermissionIds { get; set; } = new();
+}
+
+// Token Revocation DTOs
+public class RevokeTokenRequest
+{
+    public string RefreshToken { get; set; } = string.Empty;
+}
+
+public class ActiveSessionResponse
+{
+    public Guid Id { get; set; }
+    public string Token { get; set; } = string.Empty;
+    public string? IpAddress { get; set; }
+    public string? UserAgent { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? LastUsedAt { get; set; }
+    public DateTime ExpiresAt { get; set; }
+    public bool IsActive => !IsRevoked && ExpiresAt > DateTime.UtcNow;
+    public bool IsRevoked { get; set; }
+}

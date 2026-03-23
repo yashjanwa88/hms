@@ -55,11 +55,13 @@ builder.Services.AddScoped<ILoginAuditRepository>(_ => new LoginAuditRepository(
 builder.Services.AddScoped<IPasswordPolicyRepository>(_ => new PasswordPolicyRepository(connectionString));
 builder.Services.AddScoped<ITenantRepository>(_ => new TenantRepository(connectionString));
 builder.Services.AddScoped<IUserMfaRepository>(_ => new UserMfaRepository(connectionString));
+builder.Services.AddScoped<IPermissionRepository>(_ => new PermissionRepository(connectionString));
 
 builder.Services.AddScoped<ISecurityService, SecurityService>();
 builder.Services.AddScoped<IMfaService, MfaService>();
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
 
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<Shared.Common.Services.IDatabaseMigrationService>(sp =>
