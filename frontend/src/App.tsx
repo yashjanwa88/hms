@@ -38,8 +38,8 @@ import { ARAgingReportPage } from './features/billing/pages/ARAgingReportPage';
 import { RefundApprovalPage } from './features/billing/pages/RefundApprovalPage';
 import { AuditLogsPage } from './features/audit/pages/AuditLogsPage';
 import { UsersPage } from './features/users/pages/UsersPage';
-import { PermissionsPage } from './features/users/pages/PermissionsPage';
-import { PermissionsManagementPage } from './features/users/pages/PermissionsManagementPage';
+import { QueueDisplayScreen } from './pages/QueueDisplayScreen';
+import { QueueManagementDashboard } from './pages/QueueManagementDashboard';
 import { DoctorsPage } from './features/doctors/pages/DoctorsPage';
 import { DoctorDetailPage } from './features/doctors/pages/DoctorDetailPage';
 import { EditDoctorPage } from './features/doctors/pages/EditDoctorPage';
@@ -116,6 +116,10 @@ function App() {
               <Route path="users" element={<UsersPage />} />
               <Route path="users/permissions" element={<PermissionsPage />} />
               <Route path="users/permissions/manage" element={<PermissionsManagementPage />} />
+              
+              {/* Queue Management */}
+              <Route path="queue/manage" element={<QueueManagementDashboard />} />
+              <Route path="queue/display" element={<QueueDisplayScreen />} />
             </Route>
           </Routes>
         </BrowserRouter>

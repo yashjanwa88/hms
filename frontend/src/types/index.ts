@@ -180,5 +180,61 @@ export interface ActiveSession {
   lastUsedAt?: string;
   expiresAt: string;
   isActive: boolean;
+
+// Queue Management Types
+export interface QueueToken {
+  id: string;
+  tokenNumber: string;
+  patientName: string;
+  doctorName: string;
+  status: string;
+  priority: number;
+  assignedAt: string;
+  calledAt?: string;
+  completedAt?: string;
+  waitTimeMinutes?: number;
+  queuePosition?: number;
+}
+
+export interface QueueDisplayItem {
+  tokenNumber: string;
+  patientName: string;
+  status: string;
+  priority: number;
+  waitTimeMinutes: number;
+}
+
+export interface QueueDisplay {
+  doctorName: string;
+  waitingQueue: QueueDisplayItem[];
+  currentToken: QueueDisplayItem | null;
+  nextToken: QueueDisplayItem | null;
+  totalWaiting: number;
+  averageWaitTimeMinutes: number;
+}
+
+export interface QueueStatistics {
+  queueDate: string;
+  doctorName?: string;
+  totalTokens: number;
+  completedTokens: number;
+  cancelledTokens: number;
+  waitingTokens: number;
+  avgWaitTimeMinutes?: number;
+  maxWaitTimeMinutes?: number;
+  avgServiceTimeMinutes?: number;
+  completionRate: number;
+}
+
+export interface CreateQueueTokenRequest {
+  patientId: string;
+  patientName: string;
+  appointmentId?: string;
+  doctorId: string;
+  doctorName: string;
+  priority?: number;
+  notes?: string;
+}
+
   isRevoked: boolean;
 }
