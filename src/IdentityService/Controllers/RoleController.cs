@@ -92,30 +92,3 @@ public class RoleController : IdentityControllerBase
         }
     }
 }
-
-[Authorize(Policy = PermissionPolicies.RoleManage)]
-[ApiController]
-[Route("api/identity/v1/permissions")]
-public class PermissionController : ControllerBase
-{
-    private readonly IRoleService _roleService;
-
-    public PermissionController(IRoleService roleService)
-    {
-        _roleService = roleService;
-    }
-
-    [HttpGet]
-    public async Task<ActionResult<ApiResponse<IEnumerable<Permission>>>> GetAllPermissions()
-    {
-        try
-        {
-            var permissions = await _roleService.GetAllPermissionsAsync();
-            return Ok(ApiResponse<IEnumerable<Permission>>.SuccessResponse(permissions, "Success"));
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ApiResponse<IEnumerable<Permission>>.ErrorResponse(ex.Message));
-        }
-    }
-}
