@@ -79,10 +79,12 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddScoped<IAppointmentRepository>(sp => new AppointmentRepository(connectionString));
 builder.Services.AddScoped<IAppointmentStatusHistoryRepository>(sp => new AppointmentStatusHistoryRepository(connectionString));
 builder.Services.AddScoped<IAppointmentSlotLockRepository>(sp => new AppointmentSlotLockRepository(connectionString));
+builder.Services.AddScoped<IQueueRepository>(sp => new QueueRepository(connectionString));
 
 // Services
 builder.Services.AddScoped<IAppointmentService, AppointmentAppService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IQueueService, QueueService>();
 builder.Services.AddScoped<Shared.Common.Authorization.IPermissionService, Shared.Common.Services.PermissionService>();
 builder.Services.AddScoped<Shared.Common.Services.IDatabaseMigrationService>(sp =>
 {
