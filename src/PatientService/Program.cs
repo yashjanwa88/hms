@@ -103,9 +103,17 @@ builder.Services.AddScoped<IRenewalRepository>(sp => new RenewalRepository(conne
 builder.Services.AddScoped<ICardReprintRepository>(sp => new CardReprintRepository(connectionString));
 builder.Services.AddScoped<IAuditLogRepository>(sp => new AuditLogRepository(connectionString));
 
+// Clinical Data Repositories
+builder.Services.AddScoped<IPatientAllergyRepository>(sp => new PatientAllergyRepository(connectionString));
+builder.Services.AddScoped<IPatientChronicConditionRepository>(sp => new PatientChronicConditionRepository(connectionString));
+builder.Services.AddScoped<IPatientMedicationHistoryRepository>(sp => new PatientMedicationHistoryRepository(connectionString));
+builder.Services.AddScoped<IPatientImmunizationRepository>(sp => new PatientImmunizationRepository(connectionString));
+builder.Services.AddScoped<IPatientDocumentRepository>(sp => new PatientDocumentRepository(connectionString));
+
 // Services - Use standard service
 builder.Services.AddScoped<IPatientService, PatientAppService>();
 builder.Services.AddScoped<IPatientRegistrationService, PatientRegistrationService>();
+builder.Services.AddScoped<IPatientClinicalService, PatientClinicalService>();
 builder.Services.AddScoped<Shared.Common.Services.IAuditClient, Shared.Common.Services.AuditClient>();
 builder.Services.AddScoped<Shared.Common.Authorization.IPermissionService, Shared.Common.Services.PermissionService>();
 builder.Services.AddScoped<Shared.Common.Services.IDatabaseMigrationService>(sp =>
