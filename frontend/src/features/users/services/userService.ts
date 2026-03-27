@@ -71,6 +71,7 @@ export const userService = {
     return response.data;
   },
 
+  // Permission Management APIs
   getPermissions: async () => {
     const response = await axios.get(`${identityBase()}/permissions`, {
       headers: getAuthHeaders(),
@@ -78,16 +79,75 @@ export const userService = {
     return response.data;
   },
 
-  getRolePermissions: async (roleId: string) => {
-    const response = await axios.get(`${identityBase()}/roles/${roleId}/permissions`, {
+  getPermissionById: async (permissionId: string) => {
+    const response = await axios.get(`${identityBase()}/permissions/${permissionId}`, {
       headers: getAuthHeaders(),
     });
     return response.data;
   },
 
+  getPermissionsByModule: async (module: string) => {
+    const response = await axios.get(`${identityBase()}/permissions/module/${module}`, {
+      headers: getAuthHeaders(),
+    });
+    return response.data;
+  },
+
+  getUserPermissions: async (userId: string) => {
+    const response = await axios.get(`${identityBase()}/permissions/user/${userId}`, {
+      headers: getAuthHeaders(),
+    });
+    return response.data;
+  },
+
+  getRolePermissions: async (roleId: string) => {
+    const response = await axios.get(`${identityBase()}/permissions/role/${roleId}`, {
+      headers: getAuthHeaders(),
+    });
+    return response.data;
+  },
+
+  createPermission: async (data: { code: string; name: string; description: string; module: string }) => {
+    const response = await axios.post(`${identityBase()}/permissions`, data, {
+      headers: getAuthHeaders(),
+    });
+    return response.data;
+  },
+
+  updatePermission: async (permissionId: string, data: { name: string; description: string; module: string }) => {
+    const response = await axios.put(`${identityBase()}/permissions/${permissionId}`, data, {
+      headers: getAuthHeaders(),
+    });
+    return response.data;
+  },
+
+  deletePermission: async (permissionId: string) => {
+    const response = await axios.delete(`${identityBase()}/permissions/${permissionId}`, {
+      headers: getAuthHeaders(),
+    });
+    return response.data;
+  },
+
+  assignPermissionToRole: async (roleId: string, permissionId: string) => {
+    const response = await axios.post(
+      `${identityBase()}/permissions/role/${roleId}`,
+      { permissionId },
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  },
+
+  removePermissionFromRole: async (roleId: string, permissionId: string) => {
+    const response = await axios.delete(
+      `${identityBase()}/permissions/role/${roleId}/${permissionId}`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  },
+
   updateRolePermissions: async (roleId: string, permissionIds: string[]) => {
     const response = await axios.put(
-      `${identityBase()}/roles/${roleId}/permissions`,
+      `${identityBase()}/permissions/role/${roleId}/bulk`,
       { permissionIds },
       { headers: getAuthHeaders() }
     );

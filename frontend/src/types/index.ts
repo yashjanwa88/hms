@@ -135,3 +135,50 @@ export interface DashboardStats {
   pendingLabOrders: number;
   lowStockAlerts: number;
 }
+
+
+// Permission Management Types
+export interface Permission {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  module: string;
+  createdAt: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+}
+
+export interface CreatePermissionRequest {
+  code: string;
+  name: string;
+  description: string;
+  module: string;
+}
+
+export interface UpdatePermissionRequest {
+  name: string;
+  description: string;
+  module: string;
+}
+
+export interface BulkAssignPermissionsRequest {
+  permissionIds: string[];
+}
+
+export interface ActiveSession {
+  id: string;
+  token: string;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+  lastUsedAt?: string;
+  expiresAt: string;
+  isActive: boolean;
+  isRevoked: boolean;
+}

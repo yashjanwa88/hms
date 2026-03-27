@@ -70,7 +70,11 @@ export function PermissionsPage() {
     enabled: !!selectedRole?.id && rbacCodes.includes('role.manage'),
   });
 
-  const rolePermissionIds: string[] = useMemo(() => rolePermsRes?.data ?? [], [rolePermsRes]);
+  const rolePermissionIds: string[] = useMemo(() => {
+    // rolePermsRes.data is an array of Permission objects, extract IDs
+    if (!rolePermsRes?.data) return [];
+    return Array.isArray(rolePermsRes.data) ? rolePermsRes.data.map((p: Permission) => p.id) : [];
+  }, [rolePermsRes]);
 
   const updateMutation = useMutation({
     mutationFn: ({ roleId, permissionIds }: { roleId: string; permissionIds: string[] }) =>

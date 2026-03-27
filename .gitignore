@@ -76,3 +76,7 @@ dist/
 appsettings.Development.json
 appsettings.Production.json
 secrets.json
+-e 
+# Environment files
+*.env
+*.env.*

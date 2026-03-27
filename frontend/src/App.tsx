@@ -39,6 +39,7 @@ import { RefundApprovalPage } from './features/billing/pages/RefundApprovalPage'
 import { AuditLogsPage } from './features/audit/pages/AuditLogsPage';
 import { UsersPage } from './features/users/pages/UsersPage';
 import { PermissionsPage } from './features/users/pages/PermissionsPage';
+import { PermissionsManagementPage } from './features/users/pages/PermissionsManagementPage';
 import { DoctorsPage } from './features/doctors/pages/DoctorsPage';
 import { DoctorDetailPage } from './features/doctors/pages/DoctorDetailPage';
 import { EditDoctorPage } from './features/doctors/pages/EditDoctorPage';
@@ -114,6 +115,7 @@ function App() {
               <Route path="audit" element={<AuditLogsPage />} />
               <Route path="users" element={<UsersPage />} />
               <Route path="users/permissions" element={<PermissionsPage />} />
+              <Route path="users/permissions/manage" element={<PermissionsManagementPage />} />
             </Route>
           </Routes>
         </BrowserRouter>
