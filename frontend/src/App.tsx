@@ -12,6 +12,10 @@ import { EMRPage } from './features/emr/pages/EMRPage';
 import { EncounterDetailPage } from './features/emr/pages/EncounterDetailPage';
 import { LaboratoryPage } from './features/laboratory/pages/LaboratoryPage';
 import { PharmacyPage } from './features/pharmacy/pages/PharmacyPage';
+import { PharmacyDashboard } from './features/pharmacy/pages/PharmacyDashboard';
+import { DrugManagementPage } from './features/pharmacy/pages/DrugManagementPage';
+import { PrescriptionManagementPage } from './features/pharmacy/pages/PrescriptionManagementPage';
+import { InventoryManagementPage } from './features/pharmacy/pages/InventoryManagementPage';
 import { BillingPage } from './features/billing/pages/BillingPage';
 import { InventoryPage } from './features/inventory/pages/InventoryPage';
 import { PatientsPage } from './features/patients/pages/PatientsPage';
@@ -83,7 +87,10 @@ function App() {
               <Route path="emr" element={<EMRPage />} />
               <Route path="emr/encounter/:id" element={<EncounterDetailPage />} />
               <Route path="laboratory" element={<LaboratoryPage />} />
-              <Route path="pharmacy" element={<PharmacyPage />} />
+              <Route path="pharmacy" element={<PharmacyDashboard />} />
+              <Route path="pharmacy/drugs" element={<DrugManagementPage />} />
+              <Route path="pharmacy/prescriptions" element={<PrescriptionManagementPage />} />
+              <Route path="pharmacy/inventory" element={<InventoryManagementPage />} />
               <Route path="billing" element={<BillingPage />} />
               <Route path="billing/ar-aging" element={<ARAgingReportPage />} />
               <Route path="billing/refunds/approval" element={<RefundApprovalPage />} />
