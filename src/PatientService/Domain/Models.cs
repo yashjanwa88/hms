@@ -12,6 +12,7 @@ public class Patient : BaseEntity
     public DateTime DateOfBirth { get; set; }
     public int Age => DateTime.UtcNow.Year - DateOfBirth.Year - (DateTime.UtcNow.DayOfYear < DateOfBirth.DayOfYear ? 1 : 0);
     public string? BloodGroup { get; set; }
+    public string? RhFactor { get; set; }  // Positive or Negative
     public string? MaritalStatus { get; set; }
     
     // Contact
