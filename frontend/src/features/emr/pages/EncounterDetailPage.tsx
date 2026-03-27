@@ -23,6 +23,11 @@ export function EncounterDetailPage() {
     queryFn: () => emrService.getVitals(id!),
   });
 
+  const { data: clinicalNotes, refetch: refetchNotes } = useQuery({
+    queryKey: ['clinical-notes', id],
+    queryFn: () => emrService.getClinicalNotes(id!),
+  });
+
   const [vitalForm, setVitalForm] = useState({
     temperature: '',
     pulseRate: '',
@@ -30,6 +35,13 @@ export function EncounterDetailPage() {
     height: '',
     weight: '',
     oxygenSaturation: '',
+  });
+
+  const [soapForm, setSoapForm] = useState({
+    subjective: '',
+    objective: '',
+    assessment: '',
+    plan: '',
   });
 
   const handleAddVital = async () => {
@@ -59,6 +71,28 @@ export function EncounterDetailPage() {
       });
     } catch (error) {
       toast.error('Failed to add vital');
+    }
+  };
+
+  const handleAddSOAPNote = async () => {
+    try {
+      await emrService.addClinicalNote(id!, {
+        noteType: 'SOAP',
+        subjective: soapForm.subjective,
+        objective: soapForm.objective,
+        assessment: soapForm.assessment,
+        plan: soapForm.plan,
+      });
+      toast.success('Clinical note added successfully');
+      refetchNotes();
+      setSoapForm({
+        subjective: '',
+        objective: '',
+        assessment: '',
+        plan: '',
+      });
+    } catch (error) {
+      toast.error('Failed to add clinical note');
     }
   };
 
@@ -191,6 +225,117 @@ export function EncounterDetailPage() {
                 </div>
               ) : (
                 <p className="text-muted-foreground">No vitals recorded</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === 'notes' && (
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Add SOAP Note</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Subjective (Patient Complaints)</Label>
+                <textarea
+                  className="w-full min-h-[80px] p-2 border rounded-md"
+                  placeholder="What the patient tells you about symptoms, complaints, history..."
+                  value={soapForm.subjective}
+                  onChange={(e) => setSoapForm({ ...soapForm, subjective: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <Label>Objective (Findings)</Label>
+                <textarea
+                  className="w-full min-h-[80px] p-2 border rounded-md"
+                  placeholder="Vital signs, physical examination findings, test results..."
+                  value={soapForm.objective}
+                  onChange={(e) => setSoapForm({ ...soapForm, objective: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <Label>Assessment (Diagnosis)</Label>
+                <textarea
+                  className="w-full min-h-[80px] p-2 border rounded-md"
+                  placeholder="Clinical impression, diagnosis, ICD codes..."
+                  value={soapForm.assessment}
+                  onChange={(e) => setSoapForm({ ...soapForm, assessment: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <Label>Plan (Treatment)</Label>
+                <textarea
+                  className="w-full min-h-[80px] p-2 border rounded-md"
+                  placeholder="Treatment plan, medications, follow-up, patient education..."
+                  value={soapForm.plan}
+                  onChange={(e) => setSoapForm({ ...soapForm, plan: e.target.value })}
+                />
+              </div>
+
+              <Button onClick={handleAddSOAPNote} className="w-full">
+                Add SOAP Note
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Clinical Notes History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {clinicalNotes?.data?.length ? (
+                <div className="space-y-4">
+                  {clinicalNotes.data.map((note: any) => (
+                    <div key={note.id} className="rounded-md border p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-sm bg-primary/10 text-primary px-2 py-1 rounded">
+                          {note.noteType}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(note.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      
+                      {note.subjective && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">SUBJECTIVE</p>
+                          <p className="text-sm mt-1">{note.subjective}</p>
+                        </div>
+                      )}
+                      
+                      {note.objective && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">OBJECTIVE</p>
+                          <p className="text-sm mt-1">{note.objective}</p>
+                        </div>
+                      )}
+                      
+                      {note.assessment && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">ASSESSMENT</p>
+                          <p className="text-sm mt-1">{note.assessment}</p>
+                        </div>
+                      )}
+                      
+                      {note.plan && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">PLAN</p>
+                          <p className="text-sm mt-1">{note.plan}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center py-8">
+                  No clinical notes recorded yet
+                </p>
               )}
             </CardContent>
           </Card>
