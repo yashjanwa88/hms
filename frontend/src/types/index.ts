@@ -181,6 +181,8 @@ export interface ActiveSession {
   expiresAt: string;
   isActive: boolean;
 
+}
+
 // Queue Management Types
 export interface QueueToken {
   id: string;
@@ -236,5 +238,3 @@ export interface CreateQueueTokenRequest {
   notes?: string;
 }
 
-  isRevoked: boolean;
-}

@@ -15,7 +15,7 @@ import {
   Shield,
   FileSearch,
   Calendar,
-  Stethoscope,
+  Bed, Stethoscope,
   Activity,
   KeyRound,
   ChevronLeft,
@@ -47,6 +47,13 @@ const navigationGroups = [
         permission: 'patientsArea',
       },
       {
+        name: 'IPD',
+        href: '/ipd',
+        icon: Bed,
+        permission: 'ipdArea',
+      },
+
+      {
         name: 'Visits',
         href: '/visits',
         icon: Activity,
@@ -67,7 +74,7 @@ const navigationGroups = [
       {
         name: 'Doctors',
         href: '/doctors',
-        icon: Stethoscope,
+        icon: Bed, Stethoscope,
         permission: 'doctorsArea',
       },
     ],

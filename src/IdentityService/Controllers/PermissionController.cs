@@ -42,12 +42,12 @@ public class PermissionController : IdentityControllerBase
                 CreatedAt = p.CreatedAt
             }).ToList();
 
-            return Success(response, "Permissions retrieved successfully");
+            return Ok(ApiResponse<List<PermissionResponse>>.SuccessResponse(response, "Permissions retrieved successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving permissions");
-            return Error<List<PermissionResponse>>("Failed to retrieve permissions");
+            return BadRequest(ApiResponse<List<PermissionResponse>>.ErrorResponse("Failed to retrieve permissions"));
         }
     }
 
@@ -63,7 +63,7 @@ public class PermissionController : IdentityControllerBase
             
             if (permission == null)
             {
-                return NotFound(Error<PermissionResponse>("Permission not found"));
+                return NotFound(ApiResponse<PermissionResponse>.ErrorResponse("Permission not found"));
             }
 
             var response = new PermissionResponse
@@ -76,12 +76,12 @@ public class PermissionController : IdentityControllerBase
                 CreatedAt = permission.CreatedAt
             };
 
-            return Success(response, "Permission retrieved successfully");
+            return Ok(ApiResponse<PermissionResponse>.SuccessResponse(response, "Permission retrieved successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving permission {PermissionId}", id);
-            return Error<PermissionResponse>("Failed to retrieve permission");
+            return BadRequest(ApiResponse<PermissionResponse>.ErrorResponse("Failed to retrieve permission"));
         }
     }
 
@@ -105,12 +105,12 @@ public class PermissionController : IdentityControllerBase
                 CreatedAt = p.CreatedAt
             }).ToList();
 
-            return Success(response, $"Permissions for module {module} retrieved successfully");
+            return Ok(ApiResponse<List<PermissionResponse>>.SuccessResponse(response, $"Permissions for module {module} retrieved successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving permissions for module {Module}", module);
-            return Error<List<PermissionResponse>>("Failed to retrieve permissions");
+            return BadRequest(ApiResponse<List<PermissionResponse>>.ErrorResponse("Failed to retrieve permissions"));
         }
     }
 
@@ -134,12 +134,12 @@ public class PermissionController : IdentityControllerBase
                 CreatedAt = p.CreatedAt
             }).ToList();
 
-            return Success(response, "User permissions retrieved successfully");
+            return Ok(ApiResponse<List<PermissionResponse>>.SuccessResponse(response, "User permissions retrieved successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving permissions for user {UserId}", userId);
-            return Error<List<PermissionResponse>>("Failed to retrieve user permissions");
+            return BadRequest(ApiResponse<List<PermissionResponse>>.ErrorResponse("Failed to retrieve user permissions"));
         }
     }
 
@@ -163,12 +163,12 @@ public class PermissionController : IdentityControllerBase
                 CreatedAt = p.CreatedAt
             }).ToList();
 
-            return Success(response, "Role permissions retrieved successfully");
+            return Ok(ApiResponse<List<PermissionResponse>>.SuccessResponse(response, "Role permissions retrieved successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving permissions for role {RoleId}", roleId);
-            return Error<List<PermissionResponse>>("Failed to retrieve role permissions");
+            return BadRequest(ApiResponse<List<PermissionResponse>>.ErrorResponse("Failed to retrieve role permissions"));
         }
     }
 
@@ -197,12 +197,12 @@ public class PermissionController : IdentityControllerBase
                 CreatedAt = permission.CreatedAt
             };
 
-            return Success(response, "Permission created successfully");
+            return Ok(ApiResponse<PermissionResponse>.SuccessResponse(response, "Permission created successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating permission");
-            return Error<PermissionResponse>("Failed to create permission");
+            return BadRequest(ApiResponse<PermissionResponse>.ErrorResponse("Failed to create permission"));
         }
     }
 
@@ -231,16 +231,16 @@ public class PermissionController : IdentityControllerBase
                 CreatedAt = permission.CreatedAt
             };
 
-            return Success(response, "Permission updated successfully");
+            return Ok(ApiResponse<PermissionResponse>.SuccessResponse(response, "Permission updated successfully"));
         }
         catch (KeyNotFoundException)
         {
-            return NotFound(Error<PermissionResponse>("Permission not found"));
+            return NotFound(ApiResponse<PermissionResponse>.ErrorResponse("Permission not found"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating permission {PermissionId}", id);
-            return Error<PermissionResponse>("Failed to update permission");
+            return BadRequest(ApiResponse<PermissionResponse>.ErrorResponse("Failed to update permission"));
         }
     }
 
@@ -256,15 +256,15 @@ public class PermissionController : IdentityControllerBase
             
             if (!result)
             {
-                return NotFound(Error<bool>("Permission not found"));
+                return NotFound(ApiResponse<bool>.ErrorResponse("Permission not found"));
             }
 
-            return Success(true, "Permission deleted successfully");
+            return Ok(ApiResponse<bool>.SuccessResponse(true, "Permission deleted successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting permission {PermissionId}", id);
-            return Error<bool>("Failed to delete permission");
+            return BadRequest(ApiResponse<bool>.ErrorResponse("Failed to delete permission"));
         }
     }
 
@@ -276,20 +276,20 @@ public class PermissionController : IdentityControllerBase
     {
         try
         {
-            var assignedBy = GetUserId();
+            var assignedBy = GetUserIdFromClaims();
             var result = await _permissionService.AssignPermissionToRoleAsync(roleId, request.PermissionId, assignedBy);
             
             if (!result)
             {
-                return BadRequest(Error<bool>("Failed to assign permission to role"));
+                return BadRequest(ApiResponse<bool>.ErrorResponse("Failed to assign permission to role"));
             }
 
-            return Success(true, "Permission assigned to role successfully");
+            return Ok(ApiResponse<bool>.SuccessResponse(true, "Permission assigned to role successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error assigning permission {PermissionId} to role {RoleId}", request.PermissionId, roleId);
-            return Error<bool>("Failed to assign permission to role");
+            return BadRequest(ApiResponse<bool>.ErrorResponse("Failed to assign permission to role"));
         }
     }
 
@@ -305,15 +305,15 @@ public class PermissionController : IdentityControllerBase
             
             if (!result)
             {
-                return NotFound(Error<bool>("Permission or role not found"));
+                return NotFound(ApiResponse<bool>.ErrorResponse("Permission or role not found"));
             }
 
-            return Success(true, "Permission removed from role successfully");
+            return Ok(ApiResponse<bool>.SuccessResponse(true, "Permission removed from role successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing permission {PermissionId} from role {RoleId}", permissionId, roleId);
-            return Error<bool>("Failed to remove permission from role");
+            return BadRequest(ApiResponse<bool>.ErrorResponse("Failed to remove permission from role"));
         }
     }
 
@@ -325,20 +325,20 @@ public class PermissionController : IdentityControllerBase
     {
         try
         {
-            var assignedBy = GetUserId();
+            var assignedBy = GetUserIdFromClaims();
             var result = await _permissionService.BulkAssignPermissionsToRoleAsync(roleId, request.PermissionIds, assignedBy);
             
             if (!result)
             {
-                return BadRequest(Error<bool>("Failed to assign permissions to role"));
+                return BadRequest(ApiResponse<bool>.ErrorResponse("Failed to assign permissions to role"));
             }
 
-            return Success(true, $"{request.PermissionIds.Count} permissions assigned to role successfully");
+            return Ok(ApiResponse<bool>.SuccessResponse(true, $"{request.PermissionIds.Count} permissions assigned to role successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error bulk assigning permissions to role {RoleId}", roleId);
-            return Error<bool>("Failed to assign permissions to role");
+            return BadRequest(ApiResponse<bool>.ErrorResponse("Failed to assign permissions to role"));
         }
     }
 }

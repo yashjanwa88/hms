@@ -99,6 +99,9 @@ function App() {
               <Route path="doctors/:id" element={<DoctorDetailPage />} />
               <Route path="doctors/:id/edit" element={<EditDoctorPage />} />
               <Route path="appointments" element={<AppointmentsPage />} />
+              
+              <Route path="ipd" element={<IPDDashboard />} />
+              <Route path="ipd/wards" element={<WardManagement />} />
               <Route path="patients" element={<PatientsPage />} />
               <Route path="patients/dashboard" element={<PatientDashboardPage />} />
               <Route path="patients/register" element={<PatientRegistrationPage />} />

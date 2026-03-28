@@ -27,7 +27,7 @@ export function PrescriptionManagementPage() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const queryClient = useQueryClient();
 
-  const [prescriptionForm, setPrescrip tionForm] = useState({
+  const [prescriptionForm, setPrescriptionForm] = useState({
     patientId: '',
     doctorId: '',
     encounterId: '',
@@ -90,7 +90,7 @@ export function PrescriptionManagementPage() {
   };
 
   const removeItem = (index: number) => {
-    setPrescrip tionForm({
+    setPrescriptionForm({
       ...prescriptionForm,
       items: prescriptionForm.items.filter((_, i) => i !== index),
     });

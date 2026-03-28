@@ -1,6 +1,46 @@
 version: '3.8'
 
 services:
+
+  postgres-ipd:
+    image: postgres:16-alpine
+    container_name: postgres-ipd
+    environment:
+      POSTGRES_DB: ipd_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5440:5432"
+    volumes:
+  postgres-ipd-data:
+
+      - postgres-ipd-data:/var/lib/postgresql/data
+      - ./src/IPDService/scripts:/docker-entrypoint-initdb.d
+    networks:
+      - hospital-network
+
+  ipd-service:
+    build:
+      context: .
+      dockerfile: src/IPDService/Dockerfile
+    container_name: ipd-service
+    ports:
+      - "5013:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-ipd;Port=5432;Database=ipd_db;Username=postgres;Password=postgres;
+      - RabbitMQ__HostName=rabbitmq
+      - Redis__ConnectionString=redis:6379
+      - Jwt__Key=SuperSecretKeyForDigitalHospitalPlatform123!@#
+      - Jwt__Issuer=DigitalHospital
+      - Jwt__Audience=DigitalHospitalUsers
+    depends_on:
+      - postgres-ipd
+      - rabbitmq
+      - redis
+    networks:
+      - hospital-network
+
   # =====================================================
   # INFRASTRUCTURE SERVICES
   # =====================================================
@@ -15,6 +55,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
+  postgres-ipd-data:
+
       - postgres-identity-data:/var/lib/postgresql/data
       - ./src/IdentityService/scripts:/docker-entrypoint-initdb.d
     networks:
@@ -30,6 +72,8 @@ services:
     ports:
       - "5433:5432"
     volumes:
+  postgres-ipd-data:
+
       - postgres-tenant-data:/var/lib/postgresql/data
     networks:
       - hospital-network
@@ -44,6 +88,8 @@ services:
     ports:
       - "5434:5432"
     volumes:
+  postgres-ipd-data:
+
       - postgres-patient-data:/var/lib/postgresql/data
       - ./src/PatientService/scripts:/docker-entrypoint-initdb.d
     networks:
@@ -59,6 +105,8 @@ services:
     ports:
       - "5435:5432"
     volumes:
+  postgres-ipd-data:
+
       - postgres-appointment-data:/var/lib/postgresql/data
       - ./src/AppointmentService/scripts:/docker-entrypoint-initdb.d
     networks:
@@ -74,6 +122,8 @@ services:
     ports:
       - "5436:5432"
     volumes:
+  postgres-ipd-data:
+
       - postgres-encounter-data:/var/lib/postgresql/data
       - ./src/EncounterService/scripts:/docker-entrypoint-initdb.d
     networks:
@@ -89,6 +139,8 @@ services:
     ports:
       - "5440:5432"
     volumes:
+  postgres-ipd-data:
+
       - postgres-billing-data:/var/lib/postgresql/data
       - ./src/BillingService/scripts:/docker-entrypoint-initdb.d
     networks:
@@ -104,6 +156,8 @@ services:
     ports:
       - "5441:5432"
     volumes:
+  postgres-ipd-data:
+
       - postgres-insurance-data:/var/lib/postgresql/data
       - ./src/InsuranceService/scripts:/docker-entrypoint-initdb.d
     networks:
@@ -119,6 +173,8 @@ services:
     ports:
       - "5437:5432"
     volumes:
+  postgres-ipd-data:
+
       - postgres-pharmacy-data:/var/lib/postgresql/data
     networks:
       - hospital-network
@@ -133,6 +189,8 @@ services:
     ports:
       - "5438:5432"
     volumes:
+  postgres-ipd-data:
+
       - postgres-laboratory-data:/var/lib/postgresql/data
     networks:
       - hospital-network
@@ -147,6 +205,8 @@ services:
     ports:
       - "5439:5432"
     volumes:
+  postgres-ipd-data:
+
       - postgres-doctor-data:/var/lib/postgresql/data
       - ./src/DoctorService/scripts:/docker-entrypoint-initdb.d
     networks:
@@ -162,6 +222,8 @@ services:
     ports:
       - "5442:5432"
     volumes:
+  postgres-ipd-data:
+
       - postgres-emr-data:/var/lib/postgresql/data
       - ./src/EMRService/scripts:/docker-entrypoint-initdb.d
     networks:
@@ -177,6 +239,8 @@ services:
     ports:
       - "5443:5432"
     volumes:
+  postgres-ipd-data:
+
       - postgres-visit-data:/var/lib/postgresql/data
       - ./src/VisitService/scripts:/docker-entrypoint-initdb.d
     networks:
@@ -192,6 +256,8 @@ services:
       - "5672:5672"
       - "15672:15672"
     volumes:
+  postgres-ipd-data:
+
       - rabbitmq-data:/var/lib/rabbitmq
     networks:
       - hospital-network
@@ -202,6 +268,8 @@ services:
     ports:
       - "6379:6379"
     volumes:
+  postgres-ipd-data:
+
       - redis-data:/data
     networks:
       - hospital-network
@@ -493,6 +561,8 @@ networks:
     driver: bridge
 
 volumes:
+  postgres-ipd-data:
+
   postgres-identity-data:
   postgres-tenant-data:
   postgres-patient-data:
