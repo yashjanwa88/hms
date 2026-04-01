@@ -90,6 +90,8 @@ public class PatientSearchRequest
     public string? MobileNumber { get; set; }
     public string? PolicyNumber { get; set; }
     public string? Status { get; set; }
+    public string? Gender { get; set; }
+    public string? City { get; set; }
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 20;
     public string SortBy { get; set; } = "registration_date";

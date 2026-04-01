@@ -7,7 +7,7 @@ public class ApiResponse<T>
     public T? Data { get; set; }
     public List<string> Errors { get; set; } = new();
 
-    public static ApiResponse<T> SuccessResponse(T data, string message = "Operation successful")
+    public static ApiResponse<T> SuccessResponse(T? data, string message = "Operation successful")
     {
         return new ApiResponse<T>
         {

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Common.Models;
 
 namespace IdentityService.Controllers;
 
@@ -21,4 +22,24 @@ public abstract class IdentityControllerBase : ControllerBase
 
     protected Guid GetUserIdFromClaims() =>
         Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+    protected Guid GetUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            throw new UnauthorizedAccessException("User ID not found in claims");
+        }
+        return Guid.Parse(userIdClaim);
+    }
+
+    protected ActionResult<ApiResponse<T>> Success<T>(T data, string message = "Success")
+    {
+        return Ok(ApiResponse<T>.SuccessResponse(data, message));
+    }
+
+    protected ApiResponse<T> Error<T>(string message)
+    {
+        return ApiResponse<T>.ErrorResponse(message);
+    }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -9,11 +9,13 @@ import { Label } from '@/components/ui/Label';
 import { 
   Search, Filter, Download, Upload, RefreshCw, Eye, Edit, Trash2, 
   FileText, Phone, Mail, MapPin, Calendar, User, Activity, AlertCircle,
-  CheckCircle, XCircle, Clock, MoreVertical, Printer, Share2
+  CheckCircle, XCircle, Clock, MoreVertical, Printer, Share2, 
+  ArrowUpDown, ChevronLeft, ChevronRight, UserPlus
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PatientSearchModel, PatientInfoModel } from '../types';
 import { patientService } from '../services/patientService';
+import { cn } from '@/lib/utils';
 
 export function PatientListAdvanced() {
   const { t } = useTranslation();
@@ -23,34 +25,42 @@ export function PatientListAdvanced() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedPatients, setSelectedPatients] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-  
-  const [searchFilters, setSearchFilters] = useState<PatientSearchModel>({
-    searchText: '',
-    uhid: '',
-    firstName: '',
-    lastName: '',
-    mobileNumber: '',
-    email: '',
-    dateOfBirth: '',
-    gender: '',
-    patientTypeId: '',
-    registrationTypeId: '',
-    status: '',
-    fromDate: '',
-    toDate: '',
-    ageFrom: undefined,
-    ageTo: undefined,
-    bloodGroup: '',
-    city: '',
-    state: '',
-    pincode: '',
-    insuranceCompany: '',
-    policyNumber: '',
-    pageNumber: 1,
-    pageSize: 20,
-    sortBy: 'registrationDate',
-    sortOrder: 'desc',
-  });
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+ 
+   const [searchFilters, setSearchFilters] = useState<PatientSearchModel>({
+     searchText: '',
+     uhid: '',
+     firstName: '',
+     lastName: '',
+     mobileNumber: '',
+     email: '',
+     dateOfBirth: '',
+     gender: '',
+     patientTypeId: '',
+     registrationTypeId: '',
+     status: '',
+     fromDate: '',
+     toDate: '',
+     ageFrom: undefined,
+     ageTo: undefined,
+     bloodGroup: '',
+     city: '',
+     state: '',
+     pincode: '',
+     insuranceCompany: '',
+     policyNumber: '',
+     pageNumber: 1,
+     pageSize: 20,
+     sortBy: 'registrationDate',
+     sortOrder: 'desc',
+   });
+
+   useEffect(() => {
+     const handler = setTimeout(() => {
+       setSearchFilters(prev => ({ ...prev, searchText: debouncedSearch, pageNumber: 1 }));
+     }, 500);
+     return () => clearTimeout(handler);
+   }, [debouncedSearch]);
 
   // Fetch patients
   const { data: patientsData, isLoading, refetch } = useQuery({
@@ -210,10 +220,9 @@ export function PatientListAdvanced() {
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 placeholder={t('patients.search_placeholder')}
-                value={searchFilters.searchText}
-                onChange={(e) => setSearchFilters({ ...searchFilters, searchText: e.target.value })}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                className="pl-10"
+                value={debouncedSearch}
+                onChange={(e) => setDebouncedSearch(e.target.value)}
+                className="pl-10 h-11"
               />
             </div>
             <Button onClick={handleSearch}>
@@ -235,158 +244,40 @@ export function PatientListAdvanced() {
             <CardTitle>Advanced Filters</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              <div>
-                <Label>UHID</Label>
-                <Input
-                  placeholder="Enter UHID"
-                  value={searchFilters.uhid}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, uhid: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>First Name</Label>
-                <Input
-                  placeholder="Enter first name"
-                  value={searchFilters.firstName}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, firstName: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Last Name</Label>
-                <Input
-                  placeholder="Enter last name"
-                  value={searchFilters.lastName}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, lastName: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Mobile Number</Label>
-                <Input
-                  placeholder="Enter mobile"
-                  value={searchFilters.mobileNumber}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, mobileNumber: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  placeholder="Enter email"
-                  value={searchFilters.email}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, email: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Gender</Label>
-                <select
-                  className="w-full border rounded px-3 py-2"
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('patients.gender')}</Label>
+                <select 
+                  className="w-full h-11 px-3 rounded-xl border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary/10 transition-all"
                   value={searchFilters.gender}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, gender: e.target.value })}
+                  onChange={(e) => setSearchFilters({ ...searchFilters, gender: e.target.value, pageNumber: 1 })}
                 >
-                  <option value="">All</option>
+                  <option value="">All Genders</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
-              <div>
-                <Label>Blood Group</Label>
-                <select
-                  className="w-full border rounded px-3 py-2"
-                  value={searchFilters.bloodGroup}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, bloodGroup: e.target.value })}
-                >
-                  <option value="">All</option>
-                  <option value="A+">A+</option>
-                  <option value="A-">A-</option>
-                  <option value="B+">B+</option>
-                  <option value="B-">B-</option>
-                  <option value="O+">O+</option>
-                  <option value="O-">O-</option>
-                  <option value="AB+">AB+</option>
-                  <option value="AB-">AB-</option>
-                </select>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('patients.city')}</Label>
+                <Input 
+                  placeholder="Search by city..." 
+                  className="h-11 rounded-xl border-slate-200"
+                  value={searchFilters.city}
+                  onChange={(e) => setSearchFilters({ ...searchFilters, city: e.target.value, pageNumber: 1 })}
+                />
               </div>
-              <div>
-                <Label>Status</Label>
-                <select
-                  className="w-full border rounded px-3 py-2"
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('patients.status')}</Label>
+                <select 
+                  className="w-full h-11 px-3 rounded-xl border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary/10 transition-all"
                   value={searchFilters.status}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, status: e.target.value })}
+                  onChange={(e) => setSearchFilters({ ...searchFilters, status: e.target.value, pageNumber: 1 })}
                 >
-                  <option value="">All</option>
+                  <option value="">All Status</option>
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
-                  <option value="Merged">Merged</option>
-                  <option value="Deceased">Deceased</option>
                 </select>
-              </div>
-              <div>
-                <Label>Age From</Label>
-                <Input
-                  type="number"
-                  placeholder="Min age"
-                  value={searchFilters.ageFrom || ''}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, ageFrom: Number(e.target.value) || undefined })}
-                />
-              </div>
-              <div>
-                <Label>Age To</Label>
-                <Input
-                  type="number"
-                  placeholder="Max age"
-                  value={searchFilters.ageTo || ''}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, ageTo: Number(e.target.value) || undefined })}
-                />
-              </div>
-              <div>
-                <Label>City</Label>
-                <Input
-                  placeholder="Enter city"
-                  value={searchFilters.city}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, city: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>State</Label>
-                <Input
-                  placeholder="Enter state"
-                  value={searchFilters.state}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, state: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Registration From</Label>
-                <Input
-                  type="date"
-                  value={searchFilters.fromDate}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, fromDate: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Registration To</Label>
-                <Input
-                  type="date"
-                  value={searchFilters.toDate}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, toDate: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Date of Birth</Label>
-                <Input
-                  type="date"
-                  value={searchFilters.dateOfBirth}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, dateOfBirth: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Pincode</Label>
-                <Input
-                  placeholder="Enter pincode"
-                  value={searchFilters.pincode}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, pincode: e.target.value })}
-                />
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-4">
@@ -516,7 +407,7 @@ export function PatientListAdvanced() {
                             <User className="h-5 w-5 text-blue-600" />
                           </div>
                           <div>
-                            <div className="font-semibold">{patient.fullName}</div>
+                            <div className="font-semibold">{patient.fullName || `${patient.firstName} ${patient.lastName}`}</div>
                             {patient.bloodGroup && (
                               <div className="text-xs text-gray-500">Blood: {patient.bloodGroup}</div>
                             )}

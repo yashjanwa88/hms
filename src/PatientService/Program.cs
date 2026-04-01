@@ -11,6 +11,9 @@ using StackExchange.Redis;
 using System.Text;
 using System.Diagnostics;
 using Microsoft.Extensions.Caching.Distributed;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using PatientService.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +24,8 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<PatientSearchRequestValidator>();
 builder.Services.AddEndpointsApiExplorer();
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 50 * 1024 * 1024); // 50MB for import
 builder.Services.AddSwaggerGen(c =>

@@ -10,415 +10,79 @@ import { patientService } from '../services/patientService';
 import { QuickRegisterModal } from '../components/QuickRegisterModal';
 import { PatientRegistrationForm } from '../components/PatientRegistrationForm';
 import { PatientSearch } from '../components/PatientSearch';
-import { Plus, X, Zap, Eye, Settings, BarChart3, GitMerge, Clock, RefreshCw, FileSpreadsheet, CreditCard, History, QrCode } from 'lucide-react';
+import { PatientListAdvanced } from '../components/PatientListAdvanced';
+import { 
+  Plus, Search, BarChart3, Clock, RefreshCw, GitMerge, 
+  FileSpreadsheet, CreditCard, History, QrCode, Settings, Zap,
+  Users, ChevronRight
+} from 'lucide-react';
 import { toast } from 'sonner';
-
-type Gender = 'Male' | 'Female' | 'Other';
-
-type PatientFormData = {
-  firstName: string;
-  middleName: string;
-  lastName: string;
-  gender: Gender;
-  dateOfBirth: string;
-  bloodGroup: string;
-  maritalStatus: string;
-  mobileNumber: string;
-  alternateMobile: string;
-  email: string;
-  whatsAppNumber: string;
-  addressLine1: string;
-  addressLine2: string;
-  city: string;
-  state: string;
-  pincode: string;
-  country: string;
-  allergiesSummary: string;
-  chronicConditions: string;
-  currentMedications: string;
-  disabilityStatus: string;
-  organDonor: boolean;
-  emergencyContactName: string;
-  emergencyContactRelation: string;
-  emergencyContactMobile: string;
-};
+import { useTranslation } from 'react-i18next';
 
 export function PatientsPage() {
-  const [page, setPage] = useState(1);
-  const [showForm, setShowForm] = useState(false);
-  const [showFullForm, setShowFullForm] = useState(false);
-  const [showQuickRegister, setShowQuickRegister] = useState(false);
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState<PatientFormData>({
-    firstName: '',
-    middleName: '',
-    lastName: '',
-    gender: 'Male',
-    dateOfBirth: '',
-    bloodGroup: '',
-    maritalStatus: '',
-    mobileNumber: '',
-    alternateMobile: '',
-    email: '',
-    whatsAppNumber: '',
-    addressLine1: '',
-    addressLine2: '',
-    city: '',
-    state: '',
-    pincode: '',
-    country: 'India',
-    allergiesSummary: '',
-    chronicConditions: '',
-    currentMedications: '',
-    disabilityStatus: '',
-    organDonor: false,
-    emergencyContactName: '',
-    emergencyContactRelation: '',
-    emergencyContactMobile: '',
-  });
-  const pageSize = 10;
-  const queryClient = useQueryClient();
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['patients', page],
-    queryFn: () => patientService.getPatients(page, pageSize),
-  });
-
-  const createMutation = useMutation({
-    mutationFn: patientService.createPatient,
-    onSuccess: () => {
-      toast.success('Patient created successfully');
-      setShowForm(false);
-      setFormData({
-        firstName: '',
-        middleName: '',
-        lastName: '',
-        gender: 'Male',
-        dateOfBirth: '',
-        bloodGroup: '',
-        maritalStatus: '',
-        mobileNumber: '',
-        alternateMobile: '',
-        email: '',
-        whatsAppNumber: '',
-        addressLine1: '',
-        addressLine2: '',
-        city: '',
-        state: '',
-        pincode: '',
-        country: 'India',
-        allergiesSummary: '',
-        chronicConditions: '',
-        currentMedications: '',
-        disabilityStatus: '',
-        organDonor: false,
-        emergencyContactName: '',
-        emergencyContactRelation: '',
-        emergencyContactMobile: '',
-      });
-      queryClient.invalidateQueries({ queryKey: ['patients'] });
-    },
-    onError: () => {
-      toast.error('Failed to create patient');
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    createMutation.mutate(formData);
-  };
-
-  const columns = [
-    { 
-      header: 'UHID', 
-      accessorKey: 'uhid',
-    },
-    { header: 'Name', accessorKey: 'fullName' },
-    { header: 'Age', accessorKey: 'age' },
-    { header: 'Gender', accessorKey: 'gender' },
-    { header: 'Mobile', accessorKey: 'mobileNumber' },
-    { header: 'City', accessorKey: 'city' },
-    { 
-      header: 'Status', 
-      accessorKey: 'status',
-    },
-  ];
-
+  
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Patients</h1>
-        <div className="flex gap-2 flex-wrap">
-          <Button onClick={() => navigate('/patients/dashboard')} variant="outline" size="sm">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Dashboard
-          </Button>
-          <Button onClick={() => navigate('/patients/queue')} variant="outline" size="sm">
-            <Clock className="mr-2 h-4 w-4" />
-            Queue
-          </Button>
-          <Button onClick={() => navigate('/patients/renewal')} variant="outline" size="sm">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Renewal
-          </Button>
-          <Button onClick={() => navigate('/patients/merge')} variant="outline" size="sm">
-            <GitMerge className="mr-2 h-4 w-4" />
-            Merge
-          </Button>
-          <Button onClick={() => navigate('/patients/export-import')} variant="outline" size="sm">
-            <FileSpreadsheet className="mr-2 h-4 w-4" />
-            Export/Import
-          </Button>
-          <Button onClick={() => navigate('/patients/card-reprint')} variant="outline" size="sm">
-            <CreditCard className="mr-2 h-4 w-4" />
-            Card Reprint
-          </Button>
-          <Button onClick={() => navigate('/patients/audit-log')} variant="outline" size="sm">
-            <History className="mr-2 h-4 w-4" />
-            Audit Log
-          </Button>
-          <Button onClick={() => navigate('/patients/barcode')} variant="outline" size="sm">
-            <QrCode className="mr-2 h-4 w-4" />
-            Barcode/QR
-          </Button>
-          <Button onClick={() => navigate('/patients/masters')} variant="outline" size="sm">
-            <Settings className="mr-2 h-4 w-4" />
-            Masters
-          </Button>
-          <Button onClick={() => navigate('/patients/walk-in')} variant="outline" size="sm">
-            <Zap className="mr-2 h-4 w-4" />
-            Walk-in
-          </Button>
-          <Button onClick={() => navigate('/patients/register')} size="sm">
-            <Plus className="mr-2 h-4 w-4" />
-            New Patient
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Page Header */}
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500">
+            <span className="hover:text-primary cursor-pointer transition-colors" onClick={() => navigate('/')}>Dashboard</span>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-primary">Patients</span>
+          </div>
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            {t('patients.title')}
+          </h1>
+          <p className="text-lg font-medium text-slate-500 dark:text-slate-400">
+            Manage your hospital's patient directory and health records.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Button 
+            onClick={() => navigate('/patients/register')} 
+            className="h-12 px-6 shadow-xl shadow-primary/20 gap-2 text-base font-bold"
+          >
+            <Plus className="h-5 w-5" />
+            {t('patients.register')}
           </Button>
         </div>
       </div>
 
-      {showQuickRegister && <QuickRegisterModal onClose={() => setShowQuickRegister(false)} />}
-      
-      {showFullForm && (
-        <PatientRegistrationForm
-          onSubmit={(data) => {
-            createMutation.mutate(data);
-            setShowFullForm(false);
-          }}
-          onCancel={() => setShowFullForm(false)}
-        />
-      )}
-
-      {showForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Add New Patient</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="grid grid-cols-3 gap-4">
-              <div className="col-span-3 border-b pb-2 mb-2">
-                <h3 className="font-semibold text-lg">Personal Information</h3>
-              </div>
-              <div>
-                <Label>First Name *</Label>
-                <Input value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} required />
-              </div>
-              <div>
-                <Label>Middle Name</Label>
-                <Input value={formData.middleName} onChange={(e) => setFormData({ ...formData, middleName: e.target.value })} />
-              </div>
-              <div>
-                <Label>Last Name *</Label>
-                <Input value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} required />
-              </div>
-              <div>
-                <Label>Gender *</Label>
-                <select className="w-full border rounded px-3 py-2" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value as Gender })} required>
-                  <option>Male</option>
-                  <option>Female</option>
-                  <option>Other</option>
-                </select>
-              </div>
-              <div>
-                <Label>Date of Birth *</Label>
-                <Input type="date" value={formData.dateOfBirth} onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })} required />
-              </div>
-              <div>
-                <Label>Blood Group</Label>
-                <select className="w-full border rounded px-3 py-2" value={formData.bloodGroup} onChange={(e) => setFormData({ ...formData, bloodGroup: e.target.value })}>
-                  <option value="">Select</option>
-                  <option>A+</option>
-                  <option>A-</option>
-                  <option>B+</option>
-                  <option>B-</option>
-                  <option>O+</option>
-                  <option>O-</option>
-                  <option>AB+</option>
-                  <option>AB-</option>
-                </select>
-              </div>
-              <div>
-                <Label>Marital Status</Label>
-                <select className="w-full border rounded px-3 py-2" value={formData.maritalStatus} onChange={(e) => setFormData({ ...formData, maritalStatus: e.target.value })}>
-                  <option value="">Select</option>
-                  <option>Single</option>
-                  <option>Married</option>
-                  <option>Divorced</option>
-                  <option>Widowed</option>
-                </select>
-              </div>
-
-              <div className="col-span-3 border-b pb-2 mb-2 mt-4">
-                <h3 className="font-semibold text-lg">Contact Information</h3>
-              </div>
-              <div>
-                <Label>Mobile Number *</Label>
-                <Input value={formData.mobileNumber} onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })} required />
-              </div>
-              <div>
-                <Label>Alternate Mobile</Label>
-                <Input value={formData.alternateMobile} onChange={(e) => setFormData({ ...formData, alternateMobile: e.target.value })} />
-              </div>
-              <div>
-                <Label>WhatsApp Number</Label>
-                <Input value={formData.whatsAppNumber} onChange={(e) => setFormData({ ...formData, whatsAppNumber: e.target.value })} />
-              </div>
-              <div>
-                <Label>Email</Label>
-                <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-              </div>
-              <div>
-                <Label>Address Line 1</Label>
-                <Input value={formData.addressLine1} onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })} />
-              </div>
-              <div>
-                <Label>Address Line 2</Label>
-                <Input value={formData.addressLine2} onChange={(e) => setFormData({ ...formData, addressLine2: e.target.value })} />
-              </div>
-              <div>
-                <Label>City</Label>
-                <Input value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} />
-              </div>
-              <div>
-                <Label>State</Label>
-                <Input value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} />
-              </div>
-              <div>
-                <Label>Pincode</Label>
-                <Input value={formData.pincode} onChange={(e) => setFormData({ ...formData, pincode: e.target.value })} />
-              </div>
-
-              <div className="col-span-3 border-b pb-2 mb-2 mt-4">
-                <h3 className="font-semibold text-lg">Medical Information</h3>
-              </div>
-              <div>
-                <Label>Allergies Summary</Label>
-                <Input value={formData.allergiesSummary} onChange={(e) => setFormData({ ...formData, allergiesSummary: e.target.value })} placeholder="e.g., Penicillin, Peanuts" />
-              </div>
-              <div>
-                <Label>Chronic Conditions</Label>
-                <Input value={formData.chronicConditions} onChange={(e) => setFormData({ ...formData, chronicConditions: e.target.value })} placeholder="e.g., Diabetes, Hypertension" />
-              </div>
-              <div>
-                <Label>Current Medications</Label>
-                <Input value={formData.currentMedications} onChange={(e) => setFormData({ ...formData, currentMedications: e.target.value })} placeholder="e.g., Metformin, Aspirin" />
-              </div>
-              <div>
-                <Label>Disability Status</Label>
-                <Input value={formData.disabilityStatus} onChange={(e) => setFormData({ ...formData, disabilityStatus: e.target.value })} />
-              </div>
-              <div className="flex items-center space-x-2">
-                <input type="checkbox" checked={formData.organDonor} onChange={(e) => setFormData({ ...formData, organDonor: e.target.checked })} />
-                <Label>Organ Donor</Label>
-              </div>
-
-              <div className="col-span-3 border-b pb-2 mb-2 mt-4">
-                <h3 className="font-semibold text-lg">Emergency Contact</h3>
-              </div>
-              <div>
-                <Label>Emergency Contact Name</Label>
-                <Input value={formData.emergencyContactName} onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })} />
-              </div>
-              <div>
-                <Label>Relation</Label>
-                <Input value={formData.emergencyContactRelation} onChange={(e) => setFormData({ ...formData, emergencyContactRelation: e.target.value })} placeholder="e.g., Spouse, Parent" />
-              </div>
-              <div>
-                <Label>Emergency Contact Mobile</Label>
-                <Input value={formData.emergencyContactMobile} onChange={(e) => setFormData({ ...formData, emergencyContactMobile: e.target.value })} />
-              </div>
-
-              <div className="col-span-3 mt-4">
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? 'Creating...' : 'Create Patient'}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Patient List</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <PatientSearch 
-              onPatientSelect={(patient) => navigate(`/patients/${patient.id}`)}
-              placeholder="Search patients by name, UHID, or phone..."
-            />
-          </div>
-          {isLoading ? (
-            <div>Loading...</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    {columns.map((col) => (
-                      <th key={col.accessorKey} className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                        {col.header}
-                      </th>
-                    ))}
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {data?.data?.items?.map((row: any) => (
-                    <tr key={row.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <button onClick={() => navigate(`/patients/${row.id}`)} className="text-blue-600 hover:underline font-medium">
-                          {row.uhid}
-                        </button>
-                      </td>
-                      <td className="px-4 py-3">{row.fullName}</td>
-                      <td className="px-4 py-3">{row.age}</td>
-                      <td className="px-4 py-3">{row.gender}</td>
-                      <td className="px-4 py-3">{row.mobileNumber}</td>
-                      <td className="px-4 py-3">{row.city}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          row.status === 'Active' ? 'bg-green-100 text-green-800' :
-                          row.status === 'Inactive' ? 'bg-gray-100 text-gray-800' :
-                          row.status === 'Merged' ? 'bg-orange-100 text-orange-800' :
-                          row.status === 'Deceased' ? 'bg-red-100 text-red-800' : 'bg-gray-100'
-                        }`}>
-                          {row.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Button size="sm" variant="ghost" onClick={() => navigate(`/patients/${row.id}`)}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {/* Quick Actions Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        {[
+          { icon: BarChart3, label: 'Dashboard', path: '/patients/dashboard', color: 'text-blue-600', bg: 'bg-blue-50' },
+          { icon: Clock, label: 'Queue', path: '/patients/queue', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+          { icon: RefreshCw, label: 'Renewal', path: '/patients/renewal', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { icon: GitMerge, label: 'Merge', path: '/patients/merge', color: 'text-orange-600', bg: 'bg-orange-50' },
+          { icon: FileSpreadsheet, label: 'Export/Import', path: '/patients/export-import', color: 'text-cyan-600', bg: 'bg-cyan-50' },
+          { icon: CreditCard, label: 'Card Reprint', path: '/patients/card-reprint', color: 'text-violet-600', bg: 'bg-violet-50' },
+          { icon: History, label: 'Audit Log', path: '/patients/audit-log', color: 'text-slate-600', bg: 'bg-slate-50' },
+          { icon: QrCode, label: 'Barcode/QR', path: '/patients/barcode', color: 'text-rose-600', bg: 'bg-rose-50' },
+          { icon: Settings, label: 'Masters', path: '/patients/masters', color: 'text-gray-600', bg: 'bg-gray-50' },
+          { icon: Zap, label: 'Walk-in', path: '/patients/walk-in', color: 'text-amber-600', bg: 'bg-amber-50' },
+        ].map((action, i) => (
+          <button
+            key={i}
+            onClick={() => navigate(action.path)}
+            className="group flex flex-col items-center justify-center p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300"
+          >
+            <div className={`h-12 w-12 rounded-xl ${action.bg} dark:bg-slate-800 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300`}>
+              <action.icon className={`h-6 w-6 ${action.color}`} />
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">
+              {action.label}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Advanced Patient List Component */}
+      <PatientListAdvanced />
     </div>
   );
 }

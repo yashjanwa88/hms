@@ -20,6 +20,11 @@ import {
   KeyRound,
   ChevronLeft,
   ChevronRight,
+  Video,
+  CreditCard,
+  Truck,
+  Briefcase,
+  ClipboardList
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logout } from '@/store/slices/authSlice';
@@ -34,6 +39,12 @@ const navigationGroups = [
         href: '/dashboard',
         icon: LayoutDashboard,
         permission: 'dashboardArea',
+      },
+      {
+        name: 'Reception Desk',
+        href: '/reception',
+        icon: ClipboardList,
+        permission: 'patient.view',
       },
     ],
   },

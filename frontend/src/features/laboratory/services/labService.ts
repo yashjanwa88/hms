@@ -18,6 +18,14 @@ export const labService = {
     return response.data;
   },
 
+  collectSample: async (orderId: string, sampleData: any) => {
+    const response = await api.post<ApiResponse<any>>(
+      `${LAB_SERVICE}/api/laboratory/v1/orders/${orderId}/collect-sample`,
+      sampleData
+    );
+    return response.data;
+  },
+
   enterResults: async (orderId: string, results: any) => {
     const response = await api.post<ApiResponse<any>>(
       `${LAB_SERVICE}/api/laboratory/v1/orders/${orderId}/results`,

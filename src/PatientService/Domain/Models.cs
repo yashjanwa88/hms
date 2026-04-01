@@ -98,6 +98,21 @@ public class PatientSearchIndex : BaseEntity
     public DateTime LastUpdated { get; set; }
 }
 
+public class PatientTimelineEvent : BaseEntity
+{
+    public Guid PatientId { get; set; }
+    public string EventType { get; set; } = string.Empty; // visit, diagnosis, medication, lab, billing, registration
+    public string EventTitle { get; set; } = string.Empty;
+    public string? EventDescription { get; set; }
+    public DateTime EventDate { get; set; } = DateTime.UtcNow;
+    public string SourceModule { get; set; } = string.Empty; // clinical, appointment, billing, patient
+    public Guid? SourceId { get; set; }
+    public Guid? DoctorId { get; set; }
+    public string? DoctorName { get; set; }
+    public string? Status { get; set; }
+    public string? MetadataJson { get; set; } // Map to JSONB in DB
+}
+
 public class PatientVisit : BaseEntity
 {
     public Guid PatientId { get; set; }

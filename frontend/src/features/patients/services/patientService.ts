@@ -24,6 +24,8 @@ export interface PatientSearchParams {
   mobileNumber?: string;
   policyNumber?: string;
   status?: string;
+  gender?: string;
+  city?: string;
   pageNumber?: number;
   pageSize?: number;
   sortBy?: string;
@@ -116,12 +118,14 @@ export const patientService = {
       [f.firstName, f.lastName].filter(Boolean).join(' ').trim() ||
       undefined;
 
-    const params: Record<string, unknown> = {
-      searchTerm: searchTerm || undefined,
+    const params: PatientSearchParams = {
+      searchTerm,
       uhid: f.uhid,
       mobileNumber: f.mobileNumber,
       policyNumber: f.policyNumber,
       status: f.status,
+      gender: f.gender,
+      city: f.city,
       pageNumber: f.pageNumber ?? 1,
       pageSize: f.pageSize ?? 20,
       sortBy: mapSortByToApi(f.sortBy as string | undefined),
@@ -307,6 +311,14 @@ export const patientService = {
 
   getPatientBilling: (patientId: string, params?: { status?: string; pageNumber?: number; pageSize?: number }) =>
     api.get(`${BASE}/api/patients/${patientId}/billing`, { params }).then(r => r.data),
+
+  // -- Patient Timeline --------------------------------------------------------
+
+  getPatientTimeline: (patientId: string, params?: { type?: string; pageNumber?: number; pageSize?: number }) =>
+    api.get(`${BASE}/api/patients/${patientId}/timeline`, { params }).then(r => r.data),
+
+  addTimelineEvent: (patientId: string, eventData: any) =>
+    api.post(`${BASE}/api/patients/${patientId}/timeline/event`, eventData).then(r => r.data),
 
   // -- Patient Dashboard Stats (PatientDashboardStatsController)
 

@@ -8,6 +8,7 @@ import { ProtectedRoute } from './routes/ProtectedRoute';
 import { LoginPage } from './features/auth/pages/LoginPage';
 import { ChangePasswordPage } from './features/auth/pages/ChangePasswordPage';
 import { DashboardPage } from './features/dashboard/pages/DashboardPage';
+import { ReceptionistDashboard } from './features/dashboard/pages/ReceptionistDashboard';
 import { EMRPage } from './features/emr/pages/EMRPage';
 import { EncounterDetailPage } from './features/emr/pages/EncounterDetailPage';
 import { LaboratoryPage } from './features/laboratory/pages/LaboratoryPage';
@@ -48,6 +49,10 @@ import { DoctorsPage } from './features/doctors/pages/DoctorsPage';
 import { DoctorDetailPage } from './features/doctors/pages/DoctorDetailPage';
 import { EditDoctorPage } from './features/doctors/pages/EditDoctorPage';
 import { AppointmentsPage } from './features/appointments/pages/AppointmentsPage';
+import IPDDashboard from './features/ipd/pages/IPDDashboard';
+import  WardManagement from './features/ipd/pages/WardManagement';
+import { PermissionsPage } from './features/users/pages/PermissionsPage';
+import { PermissionsManagementPage } from './features/users/pages/PermissionsManagementPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +89,7 @@ function App() {
             >
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="reception" element={<ReceptionistDashboard />} />
               <Route path="emr" element={<EMRPage />} />
               <Route path="emr/encounter/:id" element={<EncounterDetailPage />} />
               <Route path="laboratory" element={<LaboratoryPage />} />

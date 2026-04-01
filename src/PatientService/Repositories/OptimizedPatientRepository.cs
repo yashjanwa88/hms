@@ -120,12 +120,12 @@ public class OptimizedPatientRepository : BaseRepository<Patient>, IPatientRepos
             // Use optimized search function
             var sql = @"
                 SELECT * FROM search_patients_optimized(
-                    @TenantId, @SearchTerm, @UHID, @MobileNumber, @Status, @PageSize, @Offset
+                    @TenantId, @SearchTerm, @UHID, @MobileNumber, @Status, @Gender, @City, @PageSize, @Offset
                 )";
             
             var countSql = @"
                 SELECT COUNT(*) FROM search_patients_optimized(
-                    @TenantId, @SearchTerm, @UHID, @MobileNumber, @Status, 999999, 0
+                    @TenantId, @SearchTerm, @UHID, @MobileNumber, @Status, @Gender, @City, 999999, 0
                 )";
 
             var offset = (request.PageNumber - 1) * request.PageSize;
@@ -136,6 +136,8 @@ public class OptimizedPatientRepository : BaseRepository<Patient>, IPatientRepos
                 UHID = request.UHID,
                 MobileNumber = request.MobileNumber,
                 Status = request.Status,
+                Gender = request.Gender,
+                City = request.City,
                 PageSize = request.PageSize,
                 Offset = offset
             };

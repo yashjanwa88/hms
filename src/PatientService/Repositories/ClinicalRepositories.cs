@@ -62,7 +62,7 @@ public class PatientAllergyRepository : BaseRepository<PatientAllergy>, IPatient
         return allergies.ToList();
     }
 
-    public async Task<PatientAllergy?> GetByIdAsync(Guid id, Guid tenantId)
+    public override async Task<PatientAllergy?> GetByIdAsync(Guid id, Guid tenantId)
     {
         using var conn = CreateConnection();
         
@@ -204,7 +204,7 @@ public class PatientChronicConditionRepository : BaseRepository<PatientChronicCo
         return conditions.ToList();
     }
 
-    public async Task<PatientChronicCondition?> GetByIdAsync(Guid id, Guid tenantId)
+    public override async Task<PatientChronicCondition?> GetByIdAsync(Guid id, Guid tenantId)
     {
         using var conn = CreateConnection();
         
@@ -319,7 +319,7 @@ public class PatientMedicationHistoryRepository : BaseRepository<PatientMedicati
         return medications.ToList();
     }
 
-    public async Task<PatientMedicationHistory?> GetByIdAsync(Guid id, Guid tenantId)
+    public override async Task<PatientMedicationHistory?> GetByIdAsync(Guid id, Guid tenantId)
     {
         using var conn = CreateConnection();
         
@@ -437,7 +437,7 @@ public class PatientImmunizationRepository : BaseRepository<PatientImmunization>
         return immunizations.ToList();
     }
 
-    public async Task<PatientImmunization?> GetByIdAsync(Guid id, Guid tenantId)
+    public override async Task<PatientImmunization?> GetByIdAsync(Guid id, Guid tenantId)
     {
         using var conn = CreateConnection();
         
@@ -553,7 +553,7 @@ public class PatientDocumentRepository : BaseRepository<PatientDocument>, IPatie
         return documents.ToList();
     }
 
-    public async Task<PatientDocument?> GetByIdAsync(Guid id, Guid tenantId)
+    public override async Task<PatientDocument?> GetByIdAsync(Guid id, Guid tenantId)
     {
         using var conn = CreateConnection();
         

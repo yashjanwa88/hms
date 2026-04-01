@@ -177,6 +177,15 @@ END $$;
 -- =====================================================
 -- PATIENT DOCUMENTS TABLE
 -- =====================================================
+-- Drop if inconsistent (missing document_type which was added in this version)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'patient_documents') AND
+       NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'patient_documents' AND column_name = 'document_type') THEN
+        DROP TABLE patient_documents CASCADE;
+    END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS patient_documents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL,

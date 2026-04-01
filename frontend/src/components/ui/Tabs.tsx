@@ -33,7 +33,15 @@ export function TabsList({ children, className = '' }: { children: React.ReactNo
   );
 }
 
-export function TabsTrigger({ value, children }: { value: string; children: React.ReactNode }) {
+export function TabsTrigger({ 
+  value, 
+  children, 
+  className = '' 
+}: { 
+  value: string; 
+  children: React.ReactNode;
+  className?: string;
+}) {
   const context = React.useContext(TabsContext);
   if (!context) throw new Error('TabsTrigger must be used within Tabs');
   
@@ -43,9 +51,8 @@ export function TabsTrigger({ value, children }: { value: string; children: Reac
     <button
       type="button"
       onClick={() => context.onValueChange(value)}
-      className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
-        isActive ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:bg-gray-200'
-      }`}
+      data-state={isActive ? 'active' : 'inactive'}
+      className={`${isActive ? '' : 'text-gray-600 hover:bg-gray-200'} ${className}`}
     >
       {children}
     </button>

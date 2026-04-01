@@ -4,6 +4,7 @@ using PatientService.Application;
 using PatientService.DTOs;
 using Shared.Common.Models;
 using Shared.Common.Authorization;
+using System.Diagnostics;
 
 namespace PatientService.Controllers;
 
@@ -151,33 +152,32 @@ public class OptimizedPatientController : ControllerBase
     public async Task<IActionResult> SearchPatients([FromQuery] PatientSearchRequest request)
     {
         var requestId = HttpContext.TraceIdentifier;
+        _logger.LogInformation("[{RequestId}] Patient search initiated. Term: {SearchTerm}, UHID: {UHID}, Mobile: {Mobile}", 
+            requestId, request.SearchTerm, request.UHID, request.MobileNumber);
+        
+        var stopwatch = Stopwatch.StartNew();
         
         try
         {
             if (!TryGetTenantId(out var tenantId))
             {
+                _logger.LogWarning("[{RequestId}] Missing tenant header in search request", requestId);
                 return BadRequest(ApiResponse<object>.ErrorResponse("Missing tenant header"));
             }
 
-            // Validate pagination parameters
-            if (request.PageSize > 100)
-            {
-                request.PageSize = 100; // Limit page size for performance
-            }
-
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var result = await _patientService.SearchPatientsAsync(request, tenantId);
+            
             stopwatch.Stop();
-
-            _logger.LogInformation("Patient search completed in {ElapsedMs}ms for request {RequestId}, returned {Count} results", 
-                stopwatch.ElapsedMilliseconds, requestId, result.Items.Count);
+            _logger.LogInformation("[{RequestId}] Patient search completed. Found: {Count} items in {Elapsed}ms", 
+                requestId, result.TotalCount, stopwatch.ElapsedMilliseconds);
 
             return Ok(ApiResponse<PagedResult<PatientResponse>>.SuccessResponse(result, "Success"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to search patients for request {RequestId}", requestId);
-            return StatusCode(500, ApiResponse<object>.ErrorResponse("Failed to search patients"));
+            stopwatch.Stop();
+            _logger.LogError(ex, "[{RequestId}] Error occurred during patient search after {Elapsed}ms", requestId, stopwatch.ElapsedMilliseconds);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse("An internal error occurred while searching patients"));
         }
     }
 

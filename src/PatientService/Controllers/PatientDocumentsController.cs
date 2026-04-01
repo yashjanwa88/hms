@@ -46,7 +46,7 @@ public class PatientDocumentsController : ControllerBase
     [RequirePermission("patient.view")]
     public async Task<IActionResult> GetDocuments(
         Guid patientId,
-        [FromQuery] string? category,
+        [FromQuery] string? type,
         [FromQuery] string? search)
     {
         using var conn = CreateConnection();
@@ -56,25 +56,22 @@ public class PatientDocumentsController : ControllerBase
         p.Add("PatientId", patientId);
         p.Add("TenantId", TenantId);
 
-        if (!string.IsNullOrEmpty(category) && category != "All")
-        { where += " AND d.category = @Category"; p.Add("Category", category); }
+        if (!string.IsNullOrEmpty(type) && type != "All")
+        { where += " AND d.document_type = @Type"; p.Add("Type", type); }
 
         if (!string.IsNullOrEmpty(search))
-        { where += " AND (d.file_name ILIKE @Search OR d.description ILIKE @Search)"; p.Add("Search", $"%{search}%"); }
+        { where += " AND (d.document_name ILIKE @Search OR d.description ILIKE @Search)"; p.Add("Search", $"%{search}%"); }
 
         var sql = $@"SELECT
-            d.id, d.patient_id as patientId, d.file_name as fileName,
-            d.original_file_name as originalFileName, d.file_type as fileType,
-            d.file_size as fileSize, d.category, d.sub_category as subCategory,
-            d.description, d.document_date as documentDate, d.expiry_date as expiryDate,
-            d.is_confidential as isConfidential, d.access_level as accessLevel,
-            d.tags, d.version, d.is_latest_version as isLatestVersion,
-            d.download_count as downloadCount, d.uploaded_by as uploadedBy,
-            d.uploaded_by_name as uploadedByName, d.notes,
-            d.created_at as uploadedDate
+            d.id, d.patient_id as patientId, d.document_name as documentName,
+            d.document_type as documentType, d.file_path as filePath,
+            d.file_size_kb as fileSizeKb, d.mime_type as mimeType,
+            d.description, d.uploaded_date as uploadedDate,
+            d.is_confidential as isConfidential,
+            d.created_at as createdAt, d.created_by as createdBy
             FROM patient_documents d
             {where}
-            ORDER BY d.created_at DESC";
+            ORDER BY d.uploaded_date DESC, d.created_at DESC";
 
         var docs = await conn.QueryAsync<dynamic>(sql, p);
         return Ok(ApiResponse<object>.SuccessResponse(docs, "Success"));
@@ -87,13 +84,9 @@ public class PatientDocumentsController : ControllerBase
     [RequestSizeLimit(50 * 1024 * 1024)]
     public async Task<IActionResult> UploadDocuments(
         Guid patientId,
-        [FromForm] string category,
-        [FromForm] string? subCategory,
+        [FromForm] string type,
         [FromForm] string? description,
-        [FromForm] string? documentDate,
-        [FromForm] bool isConfidential = false,
-        [FromForm] string? tags = null,
-        [FromForm] string? notes = null)
+        [FromForm] bool isConfidential = false)
     {
         var files = Request.Form.Files;
         if (files.Count == 0)
@@ -131,29 +124,22 @@ public class PatientDocumentsController : ControllerBase
                 .Replace('\\', '/');
 
             await conn.ExecuteAsync(@"INSERT INTO patient_documents
-                (id, tenant_id, patient_id, file_name, original_file_name, file_type, file_size,
-                 file_path, category, sub_category, description, document_date, is_confidential,
-                 tags, notes, uploaded_by, uploaded_by_name, created_at, created_by, is_deleted)
-                VALUES (@Id, @TenantId, @PatientId, @FileName, @OriginalFileName, @FileType, @FileSize,
-                 @FilePath, @Category, @SubCategory, @Description, @DocumentDate, @IsConfidential,
-                 @Tags, @Notes, @UploadedBy, @UploadedByName, NOW(), @CreatedBy, false)",
+                (id, tenant_id, patient_id, document_type, document_name, file_path, 
+                 file_size_kb, mime_type, uploaded_date, description, is_confidential,
+                 created_at, created_by, is_deleted)
+                VALUES (@Id, @TenantId, @PatientId, @DocumentType, @DocumentName, @FilePath,
+                 @FileSizeKb, @MimeType, CURRENT_DATE, @Description, @IsConfidential,
+                 NOW(), @CreatedBy, false)",
                 new
                 {
                     Id = docId, TenantId, PatientId = patientId,
-                    FileName = safeFileName,
-                    OriginalFileName = file.FileName,
-                    FileType = file.ContentType,
-                    FileSize = file.Length,
+                    DocumentType = type,
+                    DocumentName = file.FileName,
                     FilePath = relativePath,
-                    Category = category,
-                    SubCategory = subCategory,
+                    FileSizeKb = (int)(file.Length / 1024),
+                    MimeType = file.ContentType,
                     Description = description,
-                    DocumentDate = string.IsNullOrEmpty(documentDate) ? (DateTime?)null : DateTime.Parse(documentDate),
                     IsConfidential = isConfidential,
-                    Tags = tags,
-                    Notes = notes,
-                    UploadedBy = UserId,
-                    UploadedByName = string.IsNullOrEmpty(UserName) ? "System" : UserName,
                     CreatedBy = UserId
                 });
 
@@ -211,7 +197,7 @@ public class PatientDocumentsController : ControllerBase
         using var conn = CreateConnection();
 
         var doc = await conn.QueryFirstOrDefaultAsync<dynamic>(
-            @"SELECT file_path, original_file_name as originalFileName, file_type as fileType, is_confidential as isConfidential
+            @"SELECT file_path as filePath, document_name as documentName, mime_type as mimeType, is_confidential as isConfidential
               FROM patient_documents
               WHERE id = @Id AND patient_id = @PatientId AND tenant_id = @TenantId AND is_deleted = false",
             new { Id = docId, PatientId = patientId, TenantId });
@@ -219,18 +205,13 @@ public class PatientDocumentsController : ControllerBase
         if (doc == null)
             return NotFound(ApiResponse<object>.ErrorResponse("Document not found"));
 
-        var fullPath = Path.Combine(_uploadRoot, ((string)doc.file_path).Replace('/', Path.DirectorySeparatorChar));
+        var fullPath = Path.Combine(_uploadRoot, ((string)doc.filePath).Replace('/', Path.DirectorySeparatorChar));
         if (!System.IO.File.Exists(fullPath))
             return NotFound(ApiResponse<object>.ErrorResponse("File not found on server"));
 
-        // Increment download count (fire-and-forget)
-        _ = conn.ExecuteAsync(
-            "UPDATE patient_documents SET download_count = download_count + 1, last_accessed_date = NOW(), last_accessed_by = @UserId WHERE id = @Id",
-            new { Id = docId, UserId });
-
         var bytes = await System.IO.File.ReadAllBytesAsync(fullPath);
-        var contentType = (string)doc.fileType ?? "application/octet-stream";
-        var fileName = (string)doc.originalFileName ?? "document";
+        var contentType = (string)doc.mimeType ?? "application/octet-stream";
+        var fileName = (string)doc.documentName ?? "document";
 
         Response.Headers.Append("Content-Disposition", $"attachment; filename=\"{fileName}\"");
         return File(bytes, contentType, fileName);
