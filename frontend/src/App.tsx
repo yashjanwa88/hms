@@ -9,6 +9,8 @@ import { LoginPage } from './features/auth/pages/LoginPage';
 import { ChangePasswordPage } from './features/auth/pages/ChangePasswordPage';
 import { DashboardPage } from './features/dashboard/pages/DashboardPage';
 import { ReceptionistDashboard } from './features/dashboard/pages/ReceptionistDashboard';
+import NurseStationPage from './features/nurse/pages/NurseStationPage';
+import DoctorDashboard from './features/doctor/pages/DoctorDashboard';
 import { EMRPage } from './features/emr/pages/EMRPage';
 import { EncounterDetailPage } from './features/emr/pages/EncounterDetailPage';
 import { LaboratoryPage } from './features/laboratory/pages/LaboratoryPage';
@@ -53,6 +55,8 @@ import IPDDashboard from './features/ipd/pages/IPDDashboard';
 import  WardManagement from './features/ipd/pages/WardManagement';
 import { PermissionsPage } from './features/users/pages/PermissionsPage';
 import { PermissionsManagementPage } from './features/users/pages/PermissionsManagementPage';
+import SettingsPage from './features/settings/pages/SettingsPage';
+import ReportsPage from './features/reports/pages/ReportsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,6 +94,8 @@ function App() {
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="reception" element={<ReceptionistDashboard />} />
+              <Route path="nurse-station" element={<NurseStationPage />} />
+              <Route path="doctor-dashboard" element={<DoctorDashboard />} />
               <Route path="emr" element={<EMRPage />} />
               <Route path="emr/encounter/:id" element={<EncounterDetailPage />} />
               <Route path="laboratory" element={<LaboratoryPage />} />
@@ -132,6 +138,8 @@ function App() {
               <Route path="users" element={<UsersPage />} />
               <Route path="users/permissions" element={<PermissionsPage />} />
               <Route path="users/permissions/manage" element={<PermissionsManagementPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="reports" element={<ReportsPage />} />
               
               {/* Queue Management */}
               <Route path="queue/manage" element={<QueueManagementDashboard />} />

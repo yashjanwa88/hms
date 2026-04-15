@@ -15,7 +15,8 @@ import {
   Shield,
   FileSearch,
   Calendar,
-  Bed, Stethoscope,
+  Bed,
+  Stethoscope,
   Activity,
   KeyRound,
   ChevronLeft,
@@ -24,7 +25,10 @@ import {
   CreditCard,
   Truck,
   Briefcase,
-  ClipboardList
+  ClipboardList,
+  UserCheck,
+  Settings,
+  BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logout } from '@/store/slices/authSlice';
@@ -45,6 +49,23 @@ const navigationGroups = [
         href: '/reception',
         icon: ClipboardList,
         permission: 'patient.view',
+      },
+    ],
+  },
+  {
+    title: 'Flow & Care',
+    items: [
+      {
+        name: 'Nurse Station',
+        href: '/nurse-station',
+        icon: Activity,
+        permission: 'encountersArea',
+      },
+      {
+        name: 'Doctor Queue',
+        href: '/doctor-dashboard',
+        icon: Stethoscope,
+        permission: 'encountersArea',
       },
     ],
   },
@@ -85,7 +106,7 @@ const navigationGroups = [
       {
         name: 'Doctors',
         href: '/doctors',
-        icon: Bed, Stethoscope,
+        icon: Stethoscope,
         permission: 'doctorsArea',
       },
     ],
@@ -139,6 +160,23 @@ const navigationGroups = [
         href: '/audit', 
         icon: FileSearch, 
         permission: 'audit.view',
+      },
+      {
+        name: 'Settings',
+        href: '/settings',
+        icon: Settings,
+        permission: 'settings.manage',
+      },
+    ],
+  },
+  {
+    title: 'Analytics',
+    items: [
+      {
+        name: 'Reports',
+        href: '/reports',
+        icon: BarChart3,
+        permission: 'analytics.reports',
       },
     ],
   },
@@ -210,6 +248,10 @@ export function Sidebar() {
       );
     if (perm === 'inventoryArea')
       return permissionCodes.some((c) => c.startsWith('inventory.'));
+    if (perm === 'settings.manage')
+      return permissionCodes.includes('settings.manage') || permissionCodes.includes('admin.full');
+    if (perm === 'analytics.reports')
+      return permissionCodes.includes('analytics.reports') || permissionCodes.includes('analytics.dashboard');
     return permissionCodes.includes(perm);
   };
 

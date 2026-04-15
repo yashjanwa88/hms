@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
-import { PatientRegistrationForm } from '../components/PatientRegistrationForm';
+import PatientRegistrationForm from '../components/PatientRegistrationForm';
 import { patientService } from '../services/patientService';
 import {
   mapRegistrationFormToCreatePatientPayload,
