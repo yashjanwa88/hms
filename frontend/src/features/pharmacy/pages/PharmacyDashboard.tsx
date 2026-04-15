@@ -113,31 +113,19 @@ export function PharmacyDashboard() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Page Header */}
-      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500">
-            <span className="hover:text-primary cursor-pointer transition-colors" onClick={() => navigate('/')}>Dashboard</span>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-primary">Pharmacy Command Center</span>
-          </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Pharmacy & Dispensary
-          </h1>
-          <p className="text-lg font-medium text-slate-500 dark:text-slate-400">
-            Manage drug inventory, prescriptions, dispensing, and pharmaceutical reports.
-          </p>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Pharmacy & Dispensary</h1>
+          <p className="page-subtitle">Manage drug inventory, prescriptions, and dispensing.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-            onClick={() => navigate('/pharmacy/drugs')}
-            className="h-12 px-6 shadow-xl shadow-primary/20 gap-2 text-base font-bold"
-          >
-            <Plus className="h-5 w-5" />
-            Add Drug
-          </Button>
-          <Button variant="outline" onClick={() => navigate('/pharmacy/prescriptions')} className="h-12 px-5 gap-2 font-bold border-2">
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => navigate('/pharmacy/prescriptions')} className="gap-1.5">
             <ClipboardList className="h-4 w-4" />
             Prescriptions
+          </Button>
+          <Button size="sm" onClick={() => navigate('/pharmacy/drugs')} className="gap-1.5 shadow-md shadow-primary/20">
+            <Plus className="h-4 w-4" />
+            Add Drug
           </Button>
         </div>
       </div>
@@ -180,17 +168,11 @@ export function PharmacyDashboard() {
           { label: 'Sales Report', icon: BarChart3, path: '/pharmacy/reports', color: 'text-amber-600', bg: 'bg-amber-50' },
           { label: 'Batch Mgmt', icon: Beaker, path: '/pharmacy/batches', color: 'text-violet-600', bg: 'bg-violet-50' },
         ].map((action, i) => (
-          <button
-            key={i}
-            onClick={() => navigate(action.path)}
-            className="group flex flex-col items-center justify-center p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300"
-          >
-            <div className={cn('h-12 w-12 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform', action.bg)}>
-              <action.icon className={cn('h-6 w-6', action.color)} />
+          <button key={i} onClick={() => navigate(action.path)} className="group quick-tile">
+            <div className={cn('quick-tile-icon group-hover:scale-110 transition-transform', action.bg)}>
+              <action.icon className={cn('h-5 w-5', action.color)} />
             </div>
-            <span className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors text-center">
-              {action.label}
-            </span>
+            <span className="quick-tile-label group-hover:text-primary">{action.label}</span>
           </button>
         ))}
       </div>

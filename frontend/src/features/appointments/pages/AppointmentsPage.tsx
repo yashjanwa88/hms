@@ -68,48 +68,24 @@ export function AppointmentsPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Page Header */}
-      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500">
-            <span className="hover:text-primary cursor-pointer transition-colors" onClick={() => navigate('/')}>Dashboard</span>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-primary">Appointment Hub</span>
-          </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Resource Scheduler
-          </h1>
-          <p className="text-lg font-medium text-slate-500 dark:text-slate-400">
-            Manage clinician schedules, patient encounters, and facility resource allocation.
-          </p>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Appointments</h1>
+          <p className="page-subtitle">Manage clinician schedules and patient bookings.</p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mr-2">
-            <Button 
-              variant={viewType === 'list' ? 'default' : 'ghost'} 
-              size="sm" 
-              className={cn("h-9 rounded-lg gap-2 font-bold", viewType === 'list' && "shadow-sm")}
-              onClick={() => setViewType('list')}
-            >
-              <List className="h-4 w-4" />
-              List
+        <div className="flex items-center gap-2">
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg">
+            <Button variant={viewType === 'list' ? 'default' : 'ghost'} size="sm"
+              className="h-7 rounded-md gap-1.5 text-xs" onClick={() => setViewType('list')}>
+              <List className="h-3.5 w-3.5" /> List
             </Button>
-            <Button 
-              variant={viewType === 'schedule' ? 'default' : 'ghost'} 
-              size="sm" 
-              className={cn("h-9 rounded-lg gap-2 font-bold", viewType === 'schedule' && "shadow-sm")}
-              onClick={() => setViewType('schedule')}
-            >
-              <LayoutGrid className="h-4 w-4" />
-              Schedule
+            <Button variant={viewType === 'schedule' ? 'default' : 'ghost'} size="sm"
+              className="h-7 rounded-md gap-1.5 text-xs" onClick={() => setViewType('schedule')}>
+              <LayoutGrid className="h-3.5 w-3.5" /> Schedule
             </Button>
           </div>
-          <Button 
-            onClick={() => setShowBookingModal(true)}
-            className="h-12 px-6 shadow-xl shadow-primary/20 gap-2 text-base font-bold"
-          >
-            <Plus className="h-5 w-5" />
-            Book Appointment
+          <Button size="sm" onClick={() => setShowBookingModal(true)} className="gap-1.5 shadow-md shadow-primary/20">
+            <Plus className="h-4 w-4" /> Book Appointment
           </Button>
         </div>
       </div>

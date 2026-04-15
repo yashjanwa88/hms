@@ -68,14 +68,10 @@ export default function ReportsPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="page-header">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Reports & Analytics
-          </h1>
-          <p className="text-lg font-medium text-slate-500 dark:text-slate-400 mt-2">
-            Generate comprehensive reports for hospital operations.
-          </p>
+          <h1 className="page-title">Reports & Analytics</h1>
+          <p className="page-subtitle">Generate comprehensive reports for hospital operations and compliance.</p>
         </div>
       </div>
 

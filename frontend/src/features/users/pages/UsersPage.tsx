@@ -136,30 +136,15 @@ export function UsersPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header Section */}
-      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500">
-            <span className="hover:text-primary cursor-pointer transition-colors" onClick={() => navigate('/')}>Admin</span>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-primary">Identity & Access</span>
-          </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            IAM Command Center
-          </h1>
-          <p className="text-lg font-medium text-slate-500 dark:text-slate-400">
-            Securely manage global user identities, roles, and granular permissions.
-          </p>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Users & Access Control</h1>
+          <p className="page-subtitle">Manage user identities, roles, and granular permissions.</p>
         </div>
-
-        <div className="flex items-center gap-3">
-          <Button 
-            onClick={() => setShowCreateUser(true)}
-            className="h-12 px-6 shadow-xl shadow-primary/20 gap-2 text-base font-bold"
-          >
-            <UserPlus className="h-5 w-5" />
-            Create Identity
-          </Button>
-        </div>
+        <Button size="sm" onClick={() => setShowCreateUser(true)} className="gap-1.5 shadow-md shadow-primary/20">
+          <UserPlus className="h-4 w-4" />
+          Create User
+        </Button>
       </div>
 
       {/* Main Tabs Layout */}

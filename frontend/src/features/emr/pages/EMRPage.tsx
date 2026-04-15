@@ -39,30 +39,14 @@ export function EMRPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Page Header */}
-      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500">
-            <span className="hover:text-primary cursor-pointer transition-colors" onClick={() => navigate('/')}>Dashboard</span>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-primary">Clinical EMR</span>
-          </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Clinical Command Center
-          </h1>
-          <p className="text-lg font-medium text-slate-500 dark:text-slate-400">
-            Manage electronic medical records, clinical encounters, and patient longitudinal history.
-          </p>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Electronic Medical Records</h1>
+          <p className="page-subtitle">Manage clinical encounters, diagnoses, and patient longitudinal history.</p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <Button 
-            onClick={() => navigate('/emr/create')} 
-            className="h-12 px-6 shadow-xl shadow-primary/20 gap-2 text-base font-bold"
-          >
-            <Plus className="h-5 w-5" />
-            Start New Encounter
-          </Button>
-        </div>
+        <Button size="sm" onClick={() => navigate('/emr/create')} className="gap-1.5 shadow-md shadow-primary/20">
+          <Plus className="h-4 w-4" /> Start Encounter
+        </Button>
       </div>
 
       {/* Stats Grid */}
@@ -98,14 +82,12 @@ export function EMRPage() {
                 className="pl-12 h-12 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-primary text-base shadow-sm"
               />
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button variant="outline" className="h-12 px-5 gap-2 font-bold border-2">
-                <Filter className="h-4 w-4" />
-                Filter
+          <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Filter className="h-3.5 w-3.5" /> Filter
               </Button>
-              <Button variant="outline" className="h-12 px-5 gap-2 font-bold border-2">
-                <Download className="h-4 w-4" />
-                Export
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Download className="h-3.5 w-3.5" /> Export
               </Button>
             </div>
           </div>

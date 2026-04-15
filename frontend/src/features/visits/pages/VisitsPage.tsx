@@ -6,449 +6,320 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { visitService, CreateVisitRequest, EmergencyVisitRequest } from '../services/visitService';
-import { Plus, Search, Clock, AlertTriangle, Activity, Eye, CheckCircle, XCircle } from 'lucide-react';
+import {
+  Plus, Search, Clock, AlertTriangle, Activity,
+  Eye, CheckCircle, XCircle, Users, Bed, RefreshCw
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+
+const STATUS_PILL: Record<string, string> = {
+  Waiting:    'status-waiting',
+  InProgress: 'status-serving',
+  Completed:  'status-done',
+  Cancelled:  'status-emergency',
+};
+
+const PRIORITY_PILL: Record<string, string> = {
+  Emergency: 'status-emergency',
+  Urgent:    'status-waiting',
+  Normal:    'status-active',
+};
+
+const selectCls = 'h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30';
+
+const EMPTY_CREATE: CreateVisitRequest = {
+  patientId: '00000000-0000-0000-0000-000000000000',
+  patientUHID: '', doctorId: '00000000-0000-0000-0000-000000000000',
+  doctorName: '', department: '', visitType: 'OPD',
+  priority: 'Normal', chiefComplaint: '', symptoms: '',
+  isEmergency: false, consultationFee: 0,
+};
+
+const EMPTY_EMERGENCY: EmergencyVisitRequest = {
+  patientId: '00000000-0000-0000-0000-000000000000',
+  patientUHID: '', doctorId: '00000000-0000-0000-0000-000000000000',
+  doctorName: '', chiefComplaint: '', symptoms: '',
+  priority: 'Emergency', vitalSigns: '',
+};
 
 export function VisitsPage() {
-  const [activeTab, setActiveTab] = useState<'list' | 'create' | 'emergency'>('list');
-  const [searchParams, setSearchParams] = useState({
-    visitNumber: '',
-    patientUHID: '',
-    department: '',
-    status: '',
-    visitType: '',
-    fromDate: '',
-    toDate: ''
-  });
-  const [createForm, setCreateForm] = useState<CreateVisitRequest>({
-    patientId: '00000000-0000-0000-0000-000000000000',
-    patientUHID: '',
-    doctorId: '00000000-0000-0000-0000-000000000000',
-    doctorName: '',
-    department: '',
-    visitType: 'OPD',
-    priority: 'Normal',
-    chiefComplaint: '',
-    symptoms: '',
-    isEmergency: false,
-    consultationFee: 0
-  });
-  const [emergencyForm, setEmergencyForm] = useState<EmergencyVisitRequest>({
-    patientId: '00000000-0000-0000-0000-000000000000',
-    patientUHID: '',
-    doctorId: '00000000-0000-0000-0000-000000000000',
-    doctorName: '',
-    chiefComplaint: '',
-    symptoms: '',
-    priority: 'Emergency',
-    vitalSigns: ''
-  });
-
-  const navigate = useNavigate();
+  const [tab, setTab]                   = useState<'list' | 'create' | 'emergency'>('list');
+  const [searchParams, setSearchParams] = useState({ visitNumber: '', patientUHID: '', department: '', status: '', visitType: '', fromDate: '', toDate: '' });
+  const [createForm, setCreateForm]     = useState(EMPTY_CREATE);
+  const [emergencyForm, setEmergencyForm] = useState(EMPTY_EMERGENCY);
+  const navigate    = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: visits, isLoading } = useQuery({
+  const { data: visitsData, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['visits', searchParams],
-    queryFn: () => visitService.searchVisits({
-      ...searchParams,
-      pageNumber: 1,
-      pageSize: 20
-    })
+    queryFn: () => visitService.searchVisits({ ...searchParams, pageNumber: 1, pageSize: 20 }),
   });
 
-  const { data: stats } = useQuery({
+  const { data: statsData } = useQuery({
     queryKey: ['visitStats'],
     queryFn: visitService.getVisitStats,
-    refetchInterval: 60000
+    refetchInterval: 60_000,
   });
 
-  const createVisitMutation = useMutation({
-    mutationFn: visitService.createVisit,
-    onSuccess: () => {
-      toast.success('Visit created successfully');
-      setActiveTab('list');
-      queryClient.invalidateQueries({ queryKey: ['visits'] });
-      queryClient.invalidateQueries({ queryKey: ['visitStats'] });
-    },
-    onError: () => toast.error('Failed to create visit')
-  });
+  const s = statsData?.data;
+  const visits = visitsData?.data?.items ?? [];
 
-  const createEmergencyMutation = useMutation({
-    mutationFn: visitService.createEmergencyVisit,
-    onSuccess: () => {
-      toast.success('Emergency visit created successfully');
-      setActiveTab('list');
-      queryClient.invalidateQueries({ queryKey: ['visits'] });
-      queryClient.invalidateQueries({ queryKey: ['visitStats'] });
-    },
-    onError: () => toast.error('Failed to create emergency visit')
-  });
+  const createVisit    = useMutation({ mutationFn: visitService.createVisit,         onSuccess: () => { toast.success('Visit created'); setTab('list'); queryClient.invalidateQueries({ queryKey: ['visits', 'visitStats'] }); }, onError: () => toast.error('Failed') });
+  const createEmergency= useMutation({ mutationFn: visitService.createEmergencyVisit,onSuccess: () => { toast.success('Emergency visit created'); setTab('list'); queryClient.invalidateQueries({ queryKey: ['visits', 'visitStats'] }); }, onError: () => toast.error('Failed') });
+  const checkIn        = useMutation({ mutationFn: visitService.checkInVisit,        onSuccess: () => { toast.success('Checked in'); queryClient.invalidateQueries({ queryKey: ['visits'] }); }, onError: () => toast.error('Failed') });
+  const checkOut       = useMutation({ mutationFn: visitService.checkOutVisit,       onSuccess: () => { toast.success('Checked out'); queryClient.invalidateQueries({ queryKey: ['visits'] }); }, onError: () => toast.error('Failed') });
 
-  const checkInMutation = useMutation({
-    mutationFn: visitService.checkInVisit,
-    onSuccess: () => {
-      toast.success('Patient checked in');
-      queryClient.invalidateQueries({ queryKey: ['visits'] });
-    },
-    onError: () => toast.error('Failed to check in patient')
-  });
-
-  const checkOutMutation = useMutation({
-    mutationFn: visitService.checkOutVisit,
-    onSuccess: () => {
-      toast.success('Patient checked out');
-      queryClient.invalidateQueries({ queryKey: ['visits'] });
-    },
-    onError: () => toast.error('Failed to check out patient')
-  });
-
-  const handleCreateVisit = (e: React.FormEvent) => {
-    e.preventDefault();
-    createVisitMutation.mutate(createForm);
-  };
-
-  const handleCreateEmergency = (e: React.FormEvent) => {
-    e.preventDefault();
-    createEmergencyMutation.mutate(emergencyForm);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Waiting': return 'bg-yellow-100 text-yellow-800';
-      case 'InProgress': return 'bg-blue-100 text-blue-800';
-      case 'Completed': return 'bg-green-100 text-green-800';
-      case 'Cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'Emergency': return 'bg-red-100 text-red-800';
-      case 'Urgent': return 'bg-orange-100 text-orange-800';
-      case 'Normal': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const statCards = [
+    { label: 'Total',       value: s?.totalVisits    ?? 0, icon: Activity,      color: 'stat-blue',   text: 'text-blue-600'    },
+    { label: 'Today',       value: s?.todayVisits    ?? 0, icon: Clock,         color: 'stat-green',  text: 'text-emerald-600' },
+    { label: 'Active',      value: s?.activeVisits   ?? 0, icon: Users,         color: 'stat-amber',  text: 'text-amber-600'   },
+    { label: 'Emergency',   value: s?.emergencyVisits?? 0, icon: AlertTriangle, color: 'stat-rose',   text: 'text-rose-600'    },
+    { label: 'IPD Convert', value: s?.ipdConversions ?? 0, icon: Bed,           color: 'stat-violet', text: 'text-violet-600'  },
+    { label: 'Completed',   value: s?.completedVisits?? 0, icon: CheckCircle,   color: 'stat-green',  text: 'text-emerald-600' },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Visit Management</h1>
+    <div className="page-section">
+
+      {/* Header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Visit Management</h1>
+          <p className="page-subtitle">Track OPD visits, check-ins, and emergency encounters.</p>
+        </div>
         <div className="flex gap-2">
-          <Button 
-            onClick={() => setActiveTab('emergency')} 
-            variant={activeTab === 'emergency' ? 'default' : 'outline'}
-            className="bg-red-600 hover:bg-red-700 text-white"
+          <Button
+            size="sm" variant="outline"
+            className={cn('gap-1.5', tab === 'list' && 'border-primary text-primary')}
+            onClick={() => setTab('list')}
           >
-            <AlertTriangle className="mr-2 h-4 w-4" />
-            Emergency
+            <Search className="h-3.5 w-3.5" /> List
           </Button>
-          <Button 
-            onClick={() => setActiveTab('create')} 
-            variant={activeTab === 'create' ? 'default' : 'outline'}
+          <Button
+            size="sm" variant="outline"
+            className={cn('gap-1.5', tab === 'create' && 'border-primary text-primary')}
+            onClick={() => setTab('create')}
           >
-            <Plus className="mr-2 h-4 w-4" />
-            New Visit
+            <Plus className="h-3.5 w-3.5" /> New Visit
+          </Button>
+          <Button
+            size="sm"
+            className={cn('gap-1.5 bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20')}
+            onClick={() => setTab('emergency')}
+          >
+            <AlertTriangle className="h-3.5 w-3.5" /> Emergency
           </Button>
         </div>
       </div>
 
-      {stats?.data && (
-        <div className="grid grid-cols-6 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Visits</p>
-                  <p className="text-2xl font-bold">{stats.data.totalVisits}</p>
+      {/* Stats */}
+      {s && (
+        <div className="grid grid-cols-3 lg:grid-cols-6 gap-4">
+          {statCards.map(sc => (
+            <Card key={sc.label} className={sc.color}>
+              <CardContent className="pt-4 pb-3">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{sc.label}</p>
+                  <sc.icon className={`h-3.5 w-3.5 ${sc.text}`} />
                 </div>
-                <Activity className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Today</p>
-                  <p className="text-2xl font-bold">{stats.data.todayVisits}</p>
-                </div>
-                <Clock className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Active</p>
-                  <p className="text-2xl font-bold">{stats.data.activeVisits}</p>
-                </div>
-                <Activity className="h-8 w-8 text-orange-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Emergency</p>
-                  <p className="text-2xl font-bold">{stats.data.emergencyVisits}</p>
-                </div>
-                <AlertTriangle className="h-8 w-8 text-red-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">IPD Conversions</p>
-                  <p className="text-2xl font-bold">{stats.data.ipdConversions}</p>
-                </div>
-                <Activity className="h-8 w-8 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Completed</p>
-                  <p className="text-2xl font-bold">{stats.data.completedVisits}</p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
+                <p className={`text-2xl font-black ${sc.text}`}>{sc.value}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
 
-      {activeTab === 'create' && (
+      {/* Create Visit form */}
+      {tab === 'create' && (
         <Card>
-          <CardHeader>
-            <CardTitle>Create New Visit</CardTitle>
+          <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
+            <CardTitle className="text-sm font-semibold">New Visit</CardTitle>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreateVisit} className="grid grid-cols-3 gap-4">
-              <div>
-                <Label>Patient UHID *</Label>
-                <Input 
-                  value={createForm.patientUHID} 
-                  onChange={(e) => setCreateForm({...createForm, patientUHID: e.target.value})} 
-                  required 
-                />
+          <CardContent className="pt-4">
+            <form onSubmit={e => { e.preventDefault(); createVisit.mutate(createForm); }}
+              className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-500">Patient UHID *</Label>
+                <Input className="h-9 text-sm" required value={createForm.patientUHID}
+                  onChange={e => setCreateForm({ ...createForm, patientUHID: e.target.value })} />
               </div>
-              <div>
-                <Label>Doctor Name *</Label>
-                <Input 
-                  value={createForm.doctorName} 
-                  onChange={(e) => setCreateForm({...createForm, doctorName: e.target.value})} 
-                  required 
-                />
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-500">Doctor Name *</Label>
+                <Input className="h-9 text-sm" required value={createForm.doctorName}
+                  onChange={e => setCreateForm({ ...createForm, doctorName: e.target.value })} />
               </div>
-              <div>
-                <Label>Department *</Label>
-                <select 
-                  className="w-full border rounded px-3 py-2" 
-                  value={createForm.department} 
-                  onChange={(e) => setCreateForm({...createForm, department: e.target.value})} 
-                  required
-                >
-                  <option value="">Select Department</option>
-                  <option value="General Medicine">General Medicine</option>
-                  <option value="Cardiology">Cardiology</option>
-                  <option value="Orthopedics">Orthopedics</option>
-                  <option value="Pediatrics">Pediatrics</option>
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-500">Department *</Label>
+                <select className={selectCls} required value={createForm.department}
+                  onChange={e => setCreateForm({ ...createForm, department: e.target.value })}>
+                  <option value="">Select</option>
+                  {['General Medicine','Cardiology','Orthopedics','Pediatrics'].map(d => <option key={d}>{d}</option>)}
                 </select>
               </div>
-              <div className="col-span-3">
-                <Label>Chief Complaint</Label>
-                <Input 
-                  value={createForm.chiefComplaint} 
-                  onChange={(e) => setCreateForm({...createForm, chiefComplaint: e.target.value})} 
-                />
+              <div className="space-y-1 sm:col-span-3">
+                <Label className="text-xs font-semibold text-slate-500">Chief Complaint</Label>
+                <Input className="h-9 text-sm" value={createForm.chiefComplaint}
+                  onChange={e => setCreateForm({ ...createForm, chiefComplaint: e.target.value })} />
               </div>
-              <div className="col-span-3">
-                <Button type="submit" disabled={createVisitMutation.isPending}>
-                  {createVisitMutation.isPending ? 'Creating...' : 'Create Visit'}
+              <div className="sm:col-span-3 flex gap-2">
+                <Button type="submit" size="sm" className="shadow-md shadow-primary/20" disabled={createVisit.isPending}>
+                  {createVisit.isPending ? 'Creating…' : 'Create Visit'}
                 </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => setTab('list')}>Cancel</Button>
               </div>
             </form>
           </CardContent>
         </Card>
       )}
 
-      {activeTab === 'emergency' && (
-        <Card className="border-red-200">
-          <CardHeader className="bg-red-50">
-            <CardTitle className="text-red-800 flex items-center">
-              <AlertTriangle className="mr-2 h-5 w-5" />
-              Emergency Visit - Quick Entry
+      {/* Emergency form */}
+      {tab === 'emergency' && (
+        <Card className="border-rose-200 dark:border-rose-800/40">
+          <CardHeader className="border-b border-rose-100 dark:border-rose-800/30 pb-3 bg-rose-50/50 dark:bg-rose-950/20">
+            <CardTitle className="text-sm font-semibold text-rose-700 dark:text-rose-400 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" /> Emergency Visit — Quick Entry
             </CardTitle>
           </CardHeader>
-          <CardContent className="mt-4">
-            <form onSubmit={handleCreateEmergency} className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Patient UHID *</Label>
-                <Input 
-                  value={emergencyForm.patientUHID} 
-                  onChange={(e) => setEmergencyForm({...emergencyForm, patientUHID: e.target.value})} 
-                  required 
-                />
+          <CardContent className="pt-4">
+            <form onSubmit={e => { e.preventDefault(); createEmergency.mutate(emergencyForm); }}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-500">Patient UHID *</Label>
+                <Input className="h-9 text-sm" required value={emergencyForm.patientUHID}
+                  onChange={e => setEmergencyForm({ ...emergencyForm, patientUHID: e.target.value })} />
               </div>
-              <div>
-                <Label>Doctor Name *</Label>
-                <Input 
-                  value={emergencyForm.doctorName} 
-                  onChange={(e) => setEmergencyForm({...emergencyForm, doctorName: e.target.value})} 
-                  required 
-                />
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-500">Doctor Name *</Label>
+                <Input className="h-9 text-sm" required value={emergencyForm.doctorName}
+                  onChange={e => setEmergencyForm({ ...emergencyForm, doctorName: e.target.value })} />
               </div>
-              <div className="col-span-2">
-                <Label>Chief Complaint *</Label>
-                <Input 
-                  value={emergencyForm.chiefComplaint} 
-                  onChange={(e) => setEmergencyForm({...emergencyForm, chiefComplaint: e.target.value})} 
-                  required 
-                />
+              <div className="space-y-1 sm:col-span-2">
+                <Label className="text-xs font-semibold text-slate-500">Chief Complaint *</Label>
+                <Input className="h-9 text-sm" required value={emergencyForm.chiefComplaint}
+                  onChange={e => setEmergencyForm({ ...emergencyForm, chiefComplaint: e.target.value })} />
               </div>
-              <div className="col-span-2">
-                <Label>Symptoms *</Label>
-                <Input 
-                  value={emergencyForm.symptoms} 
-                  onChange={(e) => setEmergencyForm({...emergencyForm, symptoms: e.target.value})} 
-                  required 
-                />
+              <div className="space-y-1 sm:col-span-2">
+                <Label className="text-xs font-semibold text-slate-500">Symptoms *</Label>
+                <Input className="h-9 text-sm" required value={emergencyForm.symptoms}
+                  onChange={e => setEmergencyForm({ ...emergencyForm, symptoms: e.target.value })} />
               </div>
-              <div className="col-span-2">
-                <Button 
-                  type="submit" 
-                  disabled={createEmergencyMutation.isPending}
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                >
-                  {createEmergencyMutation.isPending ? 'Creating...' : 'Create Emergency Visit'}
+              <div className="sm:col-span-2 flex gap-2">
+                <Button type="submit" size="sm" className="bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20" disabled={createEmergency.isPending}>
+                  {createEmergency.isPending ? 'Creating…' : 'Create Emergency Visit'}
                 </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => setTab('list')}>Cancel</Button>
               </div>
             </form>
           </CardContent>
         </Card>
       )}
 
-      {activeTab === 'list' && (
+      {/* List view */}
+      {tab === 'list' && (
         <>
+          {/* Filters */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Search className="mr-2 h-5 w-5" />
-                Search Visits
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-4 gap-4">
-                <div>
-                  <Label>Visit Number</Label>
-                  <Input 
-                    value={searchParams.visitNumber} 
-                    onChange={(e) => setSearchParams({...searchParams, visitNumber: e.target.value})} 
-                  />
+            <CardContent className="pt-4 pb-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-slate-500">Visit #</Label>
+                  <Input className="h-8 text-sm" value={searchParams.visitNumber}
+                    onChange={e => setSearchParams({ ...searchParams, visitNumber: e.target.value })} />
                 </div>
-                <div>
-                  <Label>Patient UHID</Label>
-                  <Input 
-                    value={searchParams.patientUHID} 
-                    onChange={(e) => setSearchParams({...searchParams, patientUHID: e.target.value})} 
-                  />
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-slate-500">Patient UHID</Label>
+                  <Input className="h-8 text-sm" value={searchParams.patientUHID}
+                    onChange={e => setSearchParams({ ...searchParams, patientUHID: e.target.value })} />
                 </div>
-                <div>
-                  <Label>Department</Label>
-                  <select 
-                    className="w-full border rounded px-3 py-2" 
-                    value={searchParams.department} 
-                    onChange={(e) => setSearchParams({...searchParams, department: e.target.value})}
-                  >
-                    <option value="">All Departments</option>
-                    <option value="General Medicine">General Medicine</option>
-                    <option value="Cardiology">Cardiology</option>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-slate-500">Department</Label>
+                  <select className={cn(selectCls, 'h-8')} value={searchParams.department}
+                    onChange={e => setSearchParams({ ...searchParams, department: e.target.value })}>
+                    <option value="">All</option>
+                    {['General Medicine','Cardiology','Orthopedics','Pediatrics'].map(d => <option key={d}>{d}</option>)}
                   </select>
                 </div>
-                <div>
-                  <Label>Status</Label>
-                  <select 
-                    className="w-full border rounded px-3 py-2" 
-                    value={searchParams.status} 
-                    onChange={(e) => setSearchParams({...searchParams, status: e.target.value})}
-                  >
-                    <option value="">All Status</option>
-                    <option value="Waiting">Waiting</option>
-                    <option value="InProgress">In Progress</option>
-                    <option value="Completed">Completed</option>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-slate-500">Status</Label>
+                  <select className={cn(selectCls, 'h-8')} value={searchParams.status}
+                    onChange={e => setSearchParams({ ...searchParams, status: e.target.value })}>
+                    <option value="">All</option>
+                    {['Waiting','InProgress','Completed','Cancelled'].map(s => <option key={s}>{s}</option>)}
                   </select>
                 </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* Table */}
           <Card>
-            <CardHeader>
-              <CardTitle>Visits</CardTitle>
+            <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-primary" /> Visits
+                </CardTitle>
+                <Button variant="outline" size="sm" className="gap-1.5 h-7 text-xs" onClick={() => refetch()} disabled={isFetching}>
+                  <RefreshCw className={cn('h-3 w-3', isFetching && 'animate-spin')} /> Refresh
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {isLoading ? (
-                <div>Loading...</div>
+                <div className="p-4 space-y-2">
+                  {Array.from({ length: 6 }).map((_, i) => <div key={i} className="skeleton h-10 rounded-lg" />)}
+                </div>
+              ) : visits.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-400">
+                  <Activity className="h-12 w-12 opacity-20" />
+                  <p className="text-sm font-medium">No visits found</p>
+                </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
+                  <table className="data-table">
+                    <thead>
                       <tr>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Visit #</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Patient</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Doctor</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+                        <th>Visit #</th>
+                        <th>Patient UHID</th>
+                        <th>Doctor</th>
+                        <th>Priority</th>
+                        <th className="text-center">Status</th>
+                        <th className="text-center">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y">
-                      {visits?.data?.items?.map((visit: any) => (
-                        <tr key={visit.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3">
-                            <button 
-                              onClick={() => navigate(`/visits/${visit.id}`)} 
-                              className="text-blue-600 hover:underline font-medium"
-                            >
-                              {visit.visitNumber}
+                    <tbody>
+                      {visits.map((v: any) => (
+                        <tr key={v.id}>
+                          <td>
+                            <button onClick={() => navigate(`/visits/${v.id}`)}
+                              className="font-mono text-xs font-semibold text-primary hover:underline">
+                              {v.visitNumber}
                             </button>
                           </td>
-                          <td className="px-4 py-3">{visit.patientUHID}</td>
-                          <td className="px-4 py-3">{visit.doctorName}</td>
-                          <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(visit.status)}`}>
-                              {visit.status}
-                            </span>
+                          <td className="font-mono text-xs text-slate-500">{v.patientUHID}</td>
+                          <td className="text-sm text-slate-700 dark:text-slate-300">{v.doctorName}</td>
+                          <td>
+                            <span className={PRIORITY_PILL[v.priority] ?? 'status-inactive'}>{v.priority}</span>
                           </td>
-                          <td className="px-4 py-3">
-                            <div className="flex gap-1">
-                              <Button size="sm" variant="ghost" onClick={() => navigate(`/visits/${visit.id}`)}>
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              {visit.status === 'Waiting' && (
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost" 
-                                  onClick={() => checkInMutation.mutate(visit.id)}
-                                >
-                                  <CheckCircle className="h-4 w-4" />
-                                </Button>
+                          <td className="text-center">
+                            <span className={STATUS_PILL[v.status] ?? 'status-inactive'}>{v.status}</span>
+                          </td>
+                          <td>
+                            <div className="flex items-center justify-center gap-0.5">
+                              <button className="icon-btn" onClick={() => navigate(`/visits/${v.id}`)}>
+                                <Eye className="h-3.5 w-3.5" />
+                              </button>
+                              {v.status === 'Waiting' && (
+                                <button className="icon-btn text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                                  onClick={() => checkIn.mutate(v.id)} title="Check In">
+                                  <CheckCircle className="h-3.5 w-3.5" />
+                                </button>
                               )}
-                              {visit.status === 'InProgress' && (
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost" 
-                                  onClick={() => checkOutMutation.mutate(visit.id)}
-                                >
-                                  <XCircle className="h-4 w-4" />
-                                </Button>
+                              {v.status === 'InProgress' && (
+                                <button className="icon-btn text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                                  onClick={() => checkOut.mutate(v.id)} title="Check Out">
+                                  <XCircle className="h-3.5 w-3.5" />
+                                </button>
                               )}
                             </div>
                           </td>

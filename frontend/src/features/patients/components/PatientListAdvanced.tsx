@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -6,509 +6,361 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { 
-  Search, Filter, Download, Upload, RefreshCw, Eye, Edit, Trash2, 
-  FileText, Phone, Mail, MapPin, Calendar, User, Activity, AlertCircle,
-  CheckCircle, XCircle, Clock, MoreVertical, Printer, Share2, 
-  ArrowUpDown, ChevronLeft, ChevronRight, UserPlus
+import {
+  Search, Filter, Download, RefreshCw, Eye, Edit,
+  Trash2, FileText, Phone, Mail, MapPin, Calendar,
+  User, Activity, ChevronLeft, ChevronRight, X, Users
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PatientSearchModel, PatientInfoModel } from '../types';
 import { patientService } from '../services/patientService';
 import { cn } from '@/lib/utils';
 
+const EMPTY_FILTERS: PatientSearchModel = {
+  searchText: '', uhid: '', firstName: '', lastName: '',
+  mobileNumber: '', email: '', dateOfBirth: '', gender: '',
+  patientTypeId: '', registrationTypeId: '', status: '',
+  fromDate: '', toDate: '', ageFrom: undefined, ageTo: undefined,
+  bloodGroup: '', city: '', state: '', pincode: '',
+  insuranceCompany: '', policyNumber: '',
+  pageNumber: 1, pageSize: 20, sortBy: 'registrationDate', sortOrder: 'desc',
+};
+
+function StatusPill({ status }: { status: string }) {
+  const map: Record<string, string> = {
+    Active:   'status-active',
+    Inactive: 'status-inactive',
+    Merged:   'status-pill bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+    Deceased: 'status-pill bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  };
+  return <span className={map[status] ?? 'status-inactive'}>{status}</span>;
+}
+
+function TableSkeleton() {
+  return (
+    <tbody>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <tr key={i} className="border-b border-slate-50 dark:border-slate-800/50">
+          {Array.from({ length: 8 }).map((_, j) => (
+            <td key={j} className="px-4 py-3">
+              <div className="skeleton h-4 rounded" style={{ width: `${60 + Math.random() * 40}%` }} />
+            </td>
+          ))}
+        </tr>
+      ))}
+    </tbody>
+  );
+}
+
 export function PatientListAdvanced() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  
+
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedPatients, setSelectedPatients] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
- 
-   const [searchFilters, setSearchFilters] = useState<PatientSearchModel>({
-     searchText: '',
-     uhid: '',
-     firstName: '',
-     lastName: '',
-     mobileNumber: '',
-     email: '',
-     dateOfBirth: '',
-     gender: '',
-     patientTypeId: '',
-     registrationTypeId: '',
-     status: '',
-     fromDate: '',
-     toDate: '',
-     ageFrom: undefined,
-     ageTo: undefined,
-     bloodGroup: '',
-     city: '',
-     state: '',
-     pincode: '',
-     insuranceCompany: '',
-     policyNumber: '',
-     pageNumber: 1,
-     pageSize: 20,
-     sortBy: 'registrationDate',
-     sortOrder: 'desc',
-   });
+  const [selected, setSelected] = useState<string[]>([]);
+  const [rawSearch, setRawSearch] = useState('');
+  const [filters, setFilters] = useState<PatientSearchModel>(EMPTY_FILTERS);
 
-   useEffect(() => {
-     const handler = setTimeout(() => {
-       setSearchFilters(prev => ({ ...prev, searchText: debouncedSearch, pageNumber: 1 }));
-     }, 500);
-     return () => clearTimeout(handler);
-   }, [debouncedSearch]);
+  // Debounce search
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setFilters(f => ({ ...f, searchText: rawSearch, pageNumber: 1 }));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [rawSearch]);
 
-  // Fetch patients
-  const { data: patientsData, isLoading, refetch } = useQuery({
-    queryKey: ['patients-list', searchFilters],
-    queryFn: () => patientService.searchPatients(searchFilters),
+  const { data, isLoading, refetch, isFetching } = useQuery({
+    queryKey: ['patients-list', filters],
+    queryFn: () => patientService.searchPatients(filters),
   });
 
-  const patients = patientsData?.data?.items || [];
-  const totalCount = patientsData?.data?.totalCount || 0;
-  const totalPages = patientsData?.data?.totalPages || 0;
+  const patients: PatientInfoModel[] = data?.data?.items ?? [];
+  const totalCount: number = data?.data?.totalCount ?? 0;
+  const totalPages: number = data?.data?.totalPages ?? 0;
 
-  // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: patientService.deletePatient,
-    onSuccess: () => {
-      toast.success('Patient deleted successfully');
-      queryClient.invalidateQueries({ queryKey: ['patients-list'] });
-    },
-    onError: () => {
-      toast.error('Failed to delete patient');
-    },
+    onSuccess: () => { toast.success('Patient removed'); queryClient.invalidateQueries({ queryKey: ['patients-list'] }); },
+    onError: () => toast.error('Failed to remove patient'),
   });
 
-  // Bulk delete mutation
-  const bulkDeleteMutation = useMutation({
-    mutationFn: (ids: string[]) => Promise.all(ids.map(id => patientService.deletePatient(id))),
-    onSuccess: () => {
-      toast.success('Selected patients deleted successfully');
-      setSelectedPatients([]);
-      queryClient.invalidateQueries({ queryKey: ['patients-list'] });
-    },
-    onError: () => {
-      toast.error('Failed to delete selected patients');
-    },
-  });
+  const setPage = (p: number) => setFilters(f => ({ ...f, pageNumber: p }));
+  const setFilter = (patch: Partial<PatientSearchModel>) =>
+    setFilters(f => ({ ...f, ...patch, pageNumber: 1 }));
 
-  const handleSearch = () => {
-    setSearchFilters({ ...searchFilters, pageNumber: 1 });
+  const allSelected = patients.length > 0 && selected.length === patients.length;
+  const toggleAll = (v: boolean) => setSelected(v ? patients.map(p => p.id) : []);
+  const toggleOne = (id: string, v: boolean) =>
+    setSelected(s => v ? [...s, id] : s.filter(x => x !== id));
+
+  const handleDelete = (id: string) => {
+    if (confirm('Remove this patient record?')) deleteMutation.mutate(id);
   };
 
-  const handleClearFilters = () => {
-    setSearchFilters({
-      searchText: '',
-      uhid: '',
-      firstName: '',
-      lastName: '',
-      mobileNumber: '',
-      email: '',
-      dateOfBirth: '',
-      gender: '',
-      patientTypeId: '',
-      registrationTypeId: '',
-      status: '',
-      fromDate: '',
-      toDate: '',
-      ageFrom: undefined,
-      ageTo: undefined,
-      bloodGroup: '',
-      city: '',
-      state: '',
-      pincode: '',
-      insuranceCompany: '',
-      policyNumber: '',
-      pageNumber: 1,
-      pageSize: 20,
-      sortBy: 'registrationDate',
-      sortOrder: 'desc',
-    });
-  };
+  const from = (filters.pageNumber - 1) * filters.pageSize + 1;
+  const to   = Math.min(filters.pageNumber * filters.pageSize, totalCount);
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedPatients(patients.map((p: PatientInfoModel) => p.id));
-    } else {
-      setSelectedPatients([]);
-    }
-  };
-
-  const handleSelectPatient = (patientId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedPatients([...selectedPatients, patientId]);
-    } else {
-      setSelectedPatients(selectedPatients.filter(id => id !== patientId));
-    }
-  };
-
-  const handleDelete = (patientId: string) => {
-    if (confirm('Are you sure you want to delete this patient?')) {
-      deleteMutation.mutate(patientId);
-    }
-  };
-
-  const handleBulkDelete = () => {
-    if (selectedPatients.length === 0) {
-      toast.error('Please select patients to delete');
-      return;
-    }
-    if (confirm(`Are you sure you want to delete ${selectedPatients.length} selected patients?`)) {
-      bulkDeleteMutation.mutate(selectedPatients);
-    }
-  };
-
-  const handleExport = () => {
-    toast.info('Exporting patients data...');
-    // Implement export logic
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Active': return 'bg-green-100 text-green-800';
-      case 'Inactive': return 'bg-gray-100 text-gray-800';
-      case 'Merged': return 'bg-orange-100 text-orange-800';
-      case 'Deceased': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'Active': return <CheckCircle className="h-4 w-4" />;
-      case 'Inactive': return <XCircle className="h-4 w-4" />;
-      case 'Merged': return <AlertCircle className="h-4 w-4" />;
-      case 'Deceased': return <XCircle className="h-4 w-4" />;
-      default: return <Clock className="h-4 w-4" />;
-    }
-  };
+  // Page numbers to show
+  const pageNums = (() => {
+    const pages: number[] = [];
+    const start = Math.max(1, filters.pageNumber - 2);
+    const end   = Math.min(totalPages, start + 4);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  })();
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">{t('patients.title')}</h1>
-          <p className="text-gray-600 mt-1">Manage and search patient records</p>
+    <div className="space-y-4">
+
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+          <Input
+            value={rawSearch}
+            onChange={e => setRawSearch(e.target.value)}
+            placeholder="Search by name, UHID, mobile…"
+            className="pl-9 h-9 text-sm"
+          />
+          {rawSearch && (
+            <button onClick={() => setRawSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 icon-btn p-0.5">
+              <X className="h-3 w-3" />
+            </button>
+          )}
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => refetch()}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+        <div className="flex gap-2 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn('gap-1.5', showFilters && 'border-primary text-primary')}
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter className="h-3.5 w-3.5" />
+            Filters
+            {showFilters && <X className="h-3 w-3" />}
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => refetch()} disabled={isFetching}>
+            <RefreshCw className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')} />
             Refresh
           </Button>
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toast.info('Exporting…')}>
+            <Download className="h-3.5 w-3.5" />
             Export
-          </Button>
-          <Button onClick={() => navigate('/patients/register')}>
-            <User className="h-4 w-4 mr-2" />
-            {t('patients.register')}
           </Button>
         </div>
       </div>
 
-      {/* Quick Search Bar */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder={t('patients.search_placeholder')}
-                value={debouncedSearch}
-                onChange={(e) => setDebouncedSearch(e.target.value)}
-                className="pl-10 h-11"
-              />
-            </div>
-            <Button onClick={handleSearch}>
-              <Search className="h-4 w-4 mr-2" />
-              {t('common.search')}
-            </Button>
-            <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
-              <Filter className="h-4 w-4 mr-2" />
-              {showFilters ? 'Hide' : 'Show'} Filters
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Advanced Filters */}
+      {/* Filters panel */}
       {showFilters && (
         <Card>
-          <CardHeader>
-            <CardTitle>Advanced Filters</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('patients.gender')}</Label>
-                <select 
-                  className="w-full h-11 px-3 rounded-xl border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary/10 transition-all"
-                  value={searchFilters.gender}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, gender: e.target.value, pageNumber: 1 })}
+          <CardContent className="pt-4 pb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-500">Gender</Label>
+                <select
+                  className="w-full h-8 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  value={filters.gender}
+                  onChange={e => setFilter({ gender: e.target.value })}
                 >
-                  <option value="">All Genders</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
+                  <option value="">All</option>
+                  <option>Male</option>
+                  <option>Female</option>
+                  <option>Other</option>
                 </select>
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('patients.city')}</Label>
-                <Input 
-                  placeholder="Search by city..." 
-                  className="h-11 rounded-xl border-slate-200"
-                  value={searchFilters.city}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, city: e.target.value, pageNumber: 1 })}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-500">Status</Label>
+                <select
+                  className="w-full h-8 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  value={filters.status}
+                  onChange={e => setFilter({ status: e.target.value })}
+                >
+                  <option value="">All</option>
+                  <option>Active</option>
+                  <option>Inactive</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold text-slate-500">City</Label>
+                <Input
+                  placeholder="Filter by city"
+                  className="h-8 text-sm"
+                  value={filters.city}
+                  onChange={e => setFilter({ city: e.target.value })}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('patients.status')}</Label>
-                <select 
-                  className="w-full h-11 px-3 rounded-xl border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary/10 transition-all"
-                  value={searchFilters.status}
-                  onChange={(e) => setSearchFilters({ ...searchFilters, status: e.target.value, pageNumber: 1 })}
-                >
-                  <option value="">All Status</option>
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-              </div>
             </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <Button variant="outline" onClick={handleClearFilters}>
+            <div className="flex justify-end gap-2 mt-3">
+              <Button variant="ghost" size="sm" onClick={() => { setFilters(EMPTY_FILTERS); setRawSearch(''); }}>
                 Clear All
               </Button>
-              <Button onClick={handleSearch}>
-                Apply Filters
+              <Button size="sm" onClick={() => setFilters(f => ({ ...f, pageNumber: 1 }))}>
+                Apply
               </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Bulk Actions */}
-      {selectedPatients.length > 0 && (
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span className="font-semibold">{selectedPatients.length} patients selected</span>
-                <Button size="sm" variant="outline" onClick={() => setSelectedPatients([])}>
-                  Clear Selection
-                </Button>
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Export Selected
-                </Button>
-                <Button size="sm" variant="outline">
-                  <Printer className="h-4 w-4 mr-2" />
-                  Print Selected
-                </Button>
-                <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Selected
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Bulk action bar */}
+      {selected.length > 0 && (
+        <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-2.5">
+          <span className="text-sm font-semibold text-primary">{selected.length} selected</span>
+          <div className="flex gap-2">
+            <Button size="sm" variant="ghost" onClick={() => setSelected([])}>Clear</Button>
+            <Button size="sm" variant="destructive" onClick={() => { if (confirm(`Delete ${selected.length} patients?`)) selected.forEach(id => deleteMutation.mutate(id)); }}>
+              <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+            </Button>
+          </div>
+        </div>
       )}
 
-      {/* Results Summary */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-600">
-          Showing {((searchFilters.pageNumber - 1) * searchFilters.pageSize) + 1} to{' '}
-          {Math.min(searchFilters.pageNumber * searchFilters.pageSize, totalCount)} of {totalCount} patients
-        </div>
+      {/* Results info + page size */}
+      <div className="flex items-center justify-between text-xs text-slate-500">
+        <span>
+          {totalCount > 0 ? `Showing ${from}–${to} of ${totalCount} patients` : 'No results'}
+        </span>
         <div className="flex items-center gap-2">
-          <Label className="text-sm">Per page:</Label>
+          <span>Per page:</span>
           <select
-            className="border rounded px-2 py-1 text-sm"
-            value={searchFilters.pageSize}
-            onChange={(e) => setSearchFilters({ ...searchFilters, pageSize: Number(e.target.value), pageNumber: 1 })}
+            className="h-7 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-1.5 text-xs focus:outline-none"
+            value={filters.pageSize}
+            onChange={e => setFilter({ pageSize: Number(e.target.value) })}
           >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
+            {[10, 20, 50, 100].map(n => <option key={n}>{n}</option>)}
           </select>
         </div>
       </div>
 
-      {/* Patient List Table */}
+      {/* Table */}
       <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="text-center py-12">
-              <Activity className="h-8 w-8 animate-spin mx-auto text-blue-600" />
-              <p className="mt-2 text-gray-600">Loading patients...</p>
-            </div>
-          ) : patients.length === 0 ? (
-            <div className="text-center py-12">
-              <User className="h-12 w-12 mx-auto text-gray-400" />
-              <p className="mt-2 text-gray-600">No patients found</p>
-              <Button className="mt-4" onClick={() => navigate('/patients/register')}>
-                Register New Patient
-              </Button>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="p-3 text-left">
-                      <input
-                        type="checkbox"
-                        checked={selectedPatients.length === patients.length}
-                        onChange={(e) => handleSelectAll(e.target.checked)}
-                        className="rounded"
-                      />
-                    </th>
-                    <th className="p-3 text-left text-sm font-medium">{t('patients.uhid')}</th>
-                    <th className="p-3 text-left text-sm font-medium">Patient Name</th>
-                    <th className="p-3 text-left text-sm font-medium">Age/Gender</th>
-                    <th className="p-3 text-left text-sm font-medium">{t('patients.contact')}</th>
-                    <th className="p-3 text-left text-sm font-medium">{t('patients.city')}</th>
-                    <th className="p-3 text-left text-sm font-medium">Registration</th>
-                    <th className="p-3 text-center text-sm font-medium">{t('common.status')}</th>
-                    <th className="p-3 text-center text-sm font-medium">{t('common.actions')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {patients.map((patient: PatientInfoModel) => (
-                    <tr key={patient.id} className="hover:bg-gray-50">
-                      <td className="p-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedPatients.includes(patient.id)}
-                          onChange={(e) => handleSelectPatient(patient.id, e.target.checked)}
-                          className="rounded"
-                        />
+        <CardContent className="p-0 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th className="w-10">
+                    <input type="checkbox" checked={allSelected} onChange={e => toggleAll(e.target.checked)}
+                      className="h-3.5 w-3.5 rounded border-slate-300 text-primary" />
+                  </th>
+                  <th>UHID</th>
+                  <th>Patient</th>
+                  <th>Age / Gender</th>
+                  <th>Contact</th>
+                  <th>Location</th>
+                  <th>Registered</th>
+                  <th className="text-center">Status</th>
+                  <th className="text-center">Actions</th>
+                </tr>
+              </thead>
+
+              {isLoading ? <TableSkeleton /> : (
+                <tbody>
+                  {patients.length === 0 ? (
+                    <tr>
+                      <td colSpan={9}>
+                        <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-400">
+                          <Users className="h-12 w-12 opacity-20" />
+                          <p className="text-sm font-medium">No patients found</p>
+                          <Button size="sm" onClick={() => navigate('/patients/register')}>
+                            Register New Patient
+                          </Button>
+                        </div>
                       </td>
-                      <td className="p-3">
+                    </tr>
+                  ) : patients.map(p => (
+                    <tr key={p.id}>
+                      <td>
+                        <input type="checkbox" checked={selected.includes(p.id)}
+                          onChange={e => toggleOne(p.id, e.target.checked)}
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-primary" />
+                      </td>
+                      <td>
                         <button
-                          onClick={() => navigate(`/patients/${patient.id}`)}
-                          className="text-blue-600 hover:underline font-mono font-semibold"
+                          onClick={() => navigate(`/patients/${p.id}`)}
+                          className="font-mono text-xs font-semibold text-primary hover:underline"
                         >
-                          {patient.uhid}
+                          {p.uhid}
                         </button>
                       </td>
-                      <td className="p-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                            <User className="h-5 w-5 text-blue-600" />
+                      <td>
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
+                            {(p.firstName ?? p.fullName ?? '?').charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-semibold">{patient.fullName || `${patient.firstName} ${patient.lastName}`}</div>
-                            {patient.bloodGroup && (
-                              <div className="text-xs text-gray-500">Blood: {patient.bloodGroup}</div>
+                            <p className="font-semibold text-slate-900 dark:text-white text-sm leading-none">
+                              {p.fullName ?? `${p.firstName} ${p.lastName}`}
+                            </p>
+                            {p.bloodGroup && (
+                              <p className="text-[10px] text-slate-400 mt-0.5">{p.bloodGroup}</p>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="p-3">
-                        <div className="text-sm">
-                          <div>{patient.age}</div>
-                          <div className="text-gray-500">{patient.gender}</div>
-                        </div>
+                      <td>
+                        <p className="text-sm">{p.age ?? '—'}</p>
+                        <p className="text-xs text-slate-400">{p.gender}</p>
                       </td>
-                      <td className="p-3">
-                        <div className="text-sm space-y-1">
-                          {patient.mobileNumber && (
-                            <div className="flex items-center gap-1">
-                              <Phone className="h-3 w-3 text-gray-400" />
-                              <span>{patient.mobileNumber}</span>
+                      <td>
+                        <div className="space-y-0.5">
+                          {p.mobileNumber && (
+                            <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
+                              <Phone className="h-3 w-3 text-slate-400 shrink-0" />
+                              {p.mobileNumber}
                             </div>
                           )}
-                          {patient.email && (
-                            <div className="flex items-center gap-1">
-                              <Mail className="h-3 w-3 text-gray-400" />
-                              <span className="truncate max-w-[150px]">{patient.email}</span>
+                          {p.email && (
+                            <div className="flex items-center gap-1 text-xs text-slate-500 max-w-[160px]">
+                              <Mail className="h-3 w-3 text-slate-400 shrink-0" />
+                              <span className="truncate">{p.email}</span>
                             </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <div className="text-sm">
-                          {patient.city && (
-                            <div className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3 text-gray-400" />
-                              <span>{patient.city}</span>
-                            </div>
-                          )}
-                          {patient.state && (
-                            <div className="text-gray-500 text-xs">{patient.state}</div>
                           )}
                         </div>
                       </td>
-                      <td className="p-3">
-                        <div className="text-sm">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3 text-gray-400" />
-                            <span>{new Date(patient.registrationDate).toLocaleDateString()}</span>
+                      <td>
+                        {p.city && (
+                          <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
+                            <MapPin className="h-3 w-3 text-slate-400 shrink-0" />
+                            {p.city}{p.state ? `, ${p.state}` : ''}
                           </div>
-                          {patient.patientType && (
-                            <div className="text-xs text-gray-500 mt-1">{patient.patientType}</div>
-                          )}
+                        )}
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-1 text-xs text-slate-500">
+                          <Calendar className="h-3 w-3 text-slate-400 shrink-0" />
+                          {new Date(p.registrationDate).toLocaleDateString('en-IN')}
                         </div>
+                        {p.patientType && (
+                          <p className="text-[10px] text-slate-400 mt-0.5">{p.patientType}</p>
+                        )}
                       </td>
-                      <td className="p-3 text-center">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${getStatusColor(patient.status)}`}>
-                          {getStatusIcon(patient.status)}
-                          {patient.status}
-                        </span>
+                      <td className="text-center">
+                        <StatusPill status={p.status} />
                       </td>
-                      <td className="p-3">
-                        <div className="flex items-center justify-center gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => navigate(`/patients/${patient.id}`)}
-                            title="View Details"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => navigate(`/patients/${patient.id}/edit`)}
-                            title="Edit Patient"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => navigate(`/patients/${patient.id}/documents`)}
-                            title="Documents"
-                          >
-                            <FileText className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDelete(patient.id)}
-                            title="Delete Patient"
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                      <td>
+                        <div className="flex items-center justify-center gap-0.5">
+                          <button onClick={() => navigate(`/patients/${p.id}`)} className="icon-btn" title="View">
+                            <Eye className="h-3.5 w-3.5" />
+                          </button>
+                          <button onClick={() => navigate(`/patients/${p.id}/edit`)} className="icon-btn" title="Edit">
+                            <Edit className="h-3.5 w-3.5" />
+                          </button>
+                          <button onClick={() => navigate(`/patients/${p.id}/documents`)} className="icon-btn" title="Documents">
+                            <FileText className="h-3.5 w-3.5" />
+                          </button>
+                          <button onClick={() => handleDelete(p.id)} className="icon-btn text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30" title="Delete">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
-              </table>
-            </div>
-          )}
+              )}
+            </table>
+          </div>
         </CardContent>
       </Card>
 
@@ -516,43 +368,46 @@ export function PatientListAdvanced() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <Button
-            variant="outline"
-            disabled={searchFilters.pageNumber === 1}
-            onClick={() => setSearchFilters({ ...searchFilters, pageNumber: searchFilters.pageNumber - 1 })}
+            variant="outline" size="sm"
+            disabled={filters.pageNumber === 1}
+            onClick={() => setPage(filters.pageNumber - 1)}
+            className="gap-1"
           >
-            Previous
+            <ChevronLeft className="h-3.5 w-3.5" /> Prev
           </Button>
-          <div className="flex items-center gap-2">
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-              const pageNum = i + 1;
-              return (
-                <Button
-                  key={pageNum}
-                  variant={searchFilters.pageNumber === pageNum ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSearchFilters({ ...searchFilters, pageNumber: pageNum })}
-                >
-                  {pageNum}
-                </Button>
-              );
-            })}
-            {totalPages > 5 && <span className="text-gray-500">...</span>}
-            {totalPages > 5 && (
+
+          <div className="flex items-center gap-1">
+            {pageNums[0] > 1 && (
+              <>
+                <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-xs" onClick={() => setPage(1)}>1</Button>
+                {pageNums[0] > 2 && <span className="text-slate-400 text-xs px-1">…</span>}
+              </>
+            )}
+            {pageNums.map(n => (
               <Button
-                variant={searchFilters.pageNumber === totalPages ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSearchFilters({ ...searchFilters, pageNumber: totalPages })}
+                key={n} size="sm"
+                variant={n === filters.pageNumber ? 'default' : 'outline'}
+                className="h-7 w-7 p-0 text-xs"
+                onClick={() => setPage(n)}
               >
-                {totalPages}
+                {n}
               </Button>
+            ))}
+            {pageNums[pageNums.length - 1] < totalPages && (
+              <>
+                {pageNums[pageNums.length - 1] < totalPages - 1 && <span className="text-slate-400 text-xs px-1">…</span>}
+                <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-xs" onClick={() => setPage(totalPages)}>{totalPages}</Button>
+              </>
             )}
           </div>
+
           <Button
-            variant="outline"
-            disabled={searchFilters.pageNumber === totalPages}
-            onClick={() => setSearchFilters({ ...searchFilters, pageNumber: searchFilters.pageNumber + 1 })}
+            variant="outline" size="sm"
+            disabled={filters.pageNumber === totalPages}
+            onClick={() => setPage(filters.pageNumber + 1)}
+            className="gap-1"
           >
-            Next
+            Next <ChevronRight className="h-3.5 w-3.5" />
           </Button>
         </div>
       )}

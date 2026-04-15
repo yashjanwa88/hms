@@ -52,29 +52,15 @@ export function LaboratoryPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Page Header */}
-      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500">
-            <span className="hover:text-primary cursor-pointer transition-colors" onClick={() => navigate('/')}>Dashboard</span>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-primary">Laboratory & Diagnostics</span>
-          </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Diagnostic Command Center
-          </h1>
-          <p className="text-lg font-medium text-slate-500 dark:text-slate-400">
-            Oversee clinical laboratory orders, sample processing, and diagnostic reporting.
-          </p>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Laboratory & Diagnostics</h1>
+          <p className="page-subtitle">Manage lab orders, sample processing, and diagnostic reports.</p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <Button 
-            className="h-12 px-6 shadow-xl shadow-primary/20 gap-2 text-base font-bold"
-          >
-            <Plus className="h-5 w-5" />
-            New Diagnostic Order
-          </Button>
-        </div>
+        <Button size="sm" className="gap-1.5 shadow-md shadow-primary/20">
+          <Plus className="h-4 w-4" />
+          New Lab Order
+        </Button>
       </div>
 
       {/* Stats Grid */}
@@ -114,21 +100,16 @@ export function LaboratoryPage() {
         {[
           { label: 'Sample Intake', icon: FlaskConical, color: 'text-indigo-600', bg: 'bg-indigo-50' },
           { label: 'Result Entry', icon: ClipboardList, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Report Matrix', icon: History, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: 'Reports', icon: History, color: 'text-emerald-600', bg: 'bg-emerald-50' },
           { label: 'Quality Control', icon: ShieldCheck, color: 'text-slate-600', bg: 'bg-slate-50' },
           { label: 'Lab Masters', icon: Beaker, color: 'text-rose-600', bg: 'bg-rose-50' },
           { label: 'Settings', icon: TestTube, color: 'text-gray-600', bg: 'bg-gray-50' },
         ].map((action, i) => (
-          <button
-            key={i}
-            className="group flex flex-col items-center justify-center p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300"
-          >
-            <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform", action.bg)}>
-              <action.icon className={cn("h-6 w-6", action.color)} />
+          <button key={i} className="group quick-tile">
+            <div className={cn('quick-tile-icon group-hover:scale-110 transition-transform', action.bg)}>
+              <action.icon className={cn('h-5 w-5', action.color)} />
             </div>
-            <span className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">
-              {action.label}
-            </span>
+            <span className="quick-tile-label group-hover:text-primary">{action.label}</span>
           </button>
         ))}
       </div>

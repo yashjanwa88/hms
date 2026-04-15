@@ -43,7 +43,7 @@ Write-Host "- Identity: http://localhost:5001/swagger" -ForegroundColor Gray
 Write-Host "- Tenant: http://localhost:5002/swagger" -ForegroundColor Gray
 Write-Host "- Patient: http://localhost:5003/swagger" -ForegroundColor Gray
 Write-Host "- Appointment: http://localhost:5004/swagger" -ForegroundColor Gray
-Write-Host "- Billing: http://localhost:5005/swagger" -ForegroundColor Gray
+Write-Host "- Billing: http://localhost:5010/swagger" -ForegroundColor Gray
 Write-Host "- Pharmacy: http://localhost:5006/swagger" -ForegroundColor Gray
 Write-Host "- Laboratory: http://localhost:5007/swagger" -ForegroundColor Gray
 Write-Host "- Doctor: http://localhost:5008/swagger" -ForegroundColor Gray

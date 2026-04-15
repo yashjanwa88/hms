@@ -1,33 +1,15 @@
-import axios from 'axios';
+import api from '@/lib/api';
 
-const API_BASE_URL = 'http://localhost:5011/api/audit';
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('accessToken');
-  const tenantId = localStorage.getItem('tenantId');
-  const userId = localStorage.getItem('userId');
-  
-  return {
-    'Authorization': `Bearer ${token}`,
-    'X-Tenant-Id': tenantId || '',
-    'X-User-Id': userId || '',
-    'Content-Type': 'application/json',
-  };
-};
+const AUDIT_BASE = `${import.meta.env.VITE_AUDIT_SERVICE_URL ?? 'http://localhost:5011'}/api/audit`;
 
 export const auditService = {
   searchLogs: async (params: any) => {
-    const response = await axios.get(`${API_BASE_URL}/search`, {
-      params,
-      headers: getAuthHeaders(),
-    });
+    const response = await api.get(`${AUDIT_BASE}/search`, { params });
     return response.data;
   },
 
   getLogById: async (id: string) => {
-    const response = await axios.get(`${API_BASE_URL}/${id}`, {
-      headers: getAuthHeaders(),
-    });
+    const response = await api.get(`${AUDIT_BASE}/${id}`);
     return response.data;
   },
 };

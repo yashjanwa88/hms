@@ -36,7 +36,7 @@ export function BillingPageEnhanced() {
   const { data: summaryData } = useQuery({
     queryKey: ['billing-summary'],
     queryFn: async () => {
-      const response = await fetch('http://localhost:5005/api/billing/summary', {
+      const response = await fetch('http://localhost:5010/api/billing/summary', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
           'X-Tenant-Id': localStorage.getItem('tenantId') || '',

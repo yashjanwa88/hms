@@ -3,32 +3,11 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import type { RootState } from '@/store';
-import { 
-  LayoutDashboard, 
-  FileText, 
-  TestTube, 
-  Pill, 
-  Package, 
-  Receipt,
-  Users,
-  LogOut,
-  Shield,
-  FileSearch,
-  Calendar,
-  Bed,
-  Stethoscope,
-  Activity,
-  KeyRound,
-  ChevronLeft,
-  ChevronRight,
-  Video,
-  CreditCard,
-  Truck,
-  Briefcase,
+import {
+  LayoutDashboard, FileText, TestTube, Pill, Package, Receipt,
+  Users, LogOut, Shield, FileSearch, Calendar, Bed, Stethoscope,
+  Activity, KeyRound, ChevronLeft, ChevronRight, Settings, BarChart3,
   ClipboardList,
-  UserCheck,
-  Settings,
-  BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logout } from '@/store/slices/authSlice';
@@ -38,146 +17,40 @@ const navigationGroups = [
   {
     title: 'Overview',
     items: [
-      {
-        name: 'Dashboard',
-        href: '/dashboard',
-        icon: LayoutDashboard,
-        permission: 'dashboardArea',
-      },
-      {
-        name: 'Reception Desk',
-        href: '/reception',
-        icon: ClipboardList,
-        permission: 'patient.view',
-      },
-    ],
-  },
-  {
-    title: 'Flow & Care',
-    items: [
-      {
-        name: 'Nurse Station',
-        href: '/nurse-station',
-        icon: Activity,
-        permission: 'encountersArea',
-      },
-      {
-        name: 'Doctor Queue',
-        href: '/doctor-dashboard',
-        icon: Stethoscope,
-        permission: 'encountersArea',
-      },
+      { name: 'Dashboard',     href: '/dashboard',        icon: LayoutDashboard, permission: 'dashboardArea' },
+      { name: 'Reception',     href: '/reception',        icon: ClipboardList,   permission: 'patient.view' },
     ],
   },
   {
     title: 'Clinical',
     items: [
-      {
-        name: 'Patients',
-        href: '/patients',
-        icon: Users,
-        permission: 'patientsArea',
-      },
-      {
-        name: 'IPD',
-        href: '/ipd',
-        icon: Bed,
-        permission: 'ipdArea',
-      },
-
-      {
-        name: 'Visits',
-        href: '/visits',
-        icon: Activity,
-        permission: 'encountersArea',
-      },
-      {
-        name: 'Appointments',
-        href: '/appointments',
-        icon: Calendar,
-        permission: 'appointmentsArea',
-      },
-      {
-        name: 'EMR',
-        href: '/emr',
-        icon: FileText,
-        permission: 'encountersArea',
-      },
-      {
-        name: 'Doctors',
-        href: '/doctors',
-        icon: Stethoscope,
-        permission: 'doctorsArea',
-      },
+      { name: 'Patients',      href: '/patients',         icon: Users,           permission: 'patientsArea' },
+      { name: 'Appointments',  href: '/appointments',     icon: Calendar,        permission: 'appointmentsArea' },
+      { name: 'Doctor Queue',  href: '/doctor-dashboard', icon: Stethoscope,     permission: 'encountersArea' },
+      { name: 'Nurse Station', href: '/nurse-station',    icon: Activity,        permission: 'encountersArea' },
+      { name: 'IPD',           href: '/ipd',              icon: Bed,             permission: 'ipdArea' },
+      { name: 'Visits',        href: '/visits',           icon: Activity,        permission: 'encountersArea' },
+      { name: 'EMR',           href: '/emr',              icon: FileText,        permission: 'encountersArea' },
+      { name: 'Doctors',       href: '/doctors',          icon: Stethoscope,     permission: 'doctorsArea' },
     ],
   },
   {
-    title: 'Operational',
+    title: 'Operations',
     items: [
-      {
-        name: 'Laboratory',
-        href: '/laboratory',
-        icon: TestTube,
-        permission: 'laboratoryArea',
-      },
-      {
-        name: 'Pharmacy',
-        href: '/pharmacy',
-        icon: Pill,
-        permission: 'pharmacyArea',
-      },
-      { 
-        name: 'Inventory', 
-        href: '/inventory', 
-        icon: Package,
-        permission: 'inventoryArea',
-      },
-      {
-        name: 'Billing',
-        href: '/billing',
-        icon: Receipt,
-        permission: 'billingArea',
-      },
+      { name: 'Laboratory',    href: '/laboratory',       icon: TestTube,        permission: 'laboratoryArea' },
+      { name: 'Pharmacy',      href: '/pharmacy',         icon: Pill,            permission: 'pharmacyArea' },
+      { name: 'Inventory',     href: '/inventory',        icon: Package,         permission: 'inventoryArea' },
+      { name: 'Billing',       href: '/billing',          icon: Receipt,         permission: 'billingArea' },
     ],
   },
   {
-    title: 'Admin & Security',
+    title: 'Admin',
     items: [
-      {
-        name: 'Users & roles',
-        href: '/users',
-        icon: Shield,
-        permission: 'usersArea',
-      },
-      {
-        name: 'Permission matrix',
-        href: '/users/permissions',
-        icon: KeyRound,
-        permission: 'role.manage',
-      },
-      { 
-        name: 'Audit Logs', 
-        href: '/audit', 
-        icon: FileSearch, 
-        permission: 'audit.view',
-      },
-      {
-        name: 'Settings',
-        href: '/settings',
-        icon: Settings,
-        permission: 'settings.manage',
-      },
-    ],
-  },
-  {
-    title: 'Analytics',
-    items: [
-      {
-        name: 'Reports',
-        href: '/reports',
-        icon: BarChart3,
-        permission: 'analytics.reports',
-      },
+      { name: 'Users & Roles', href: '/users',                    icon: Shield,    permission: 'usersArea' },
+      { name: 'Permissions',   href: '/users/permissions',        icon: KeyRound,  permission: 'role.manage' },
+      { name: 'Audit Logs',    href: '/audit',                    icon: FileSearch,permission: 'audit.view' },
+      { name: 'Reports',       href: '/reports',                  icon: BarChart3, permission: 'analytics.reports' },
+      { name: 'Settings',      href: '/settings',                 icon: Settings,  permission: 'settings.manage' },
     ],
   },
 ] as const;
@@ -185,215 +58,162 @@ const navigationGroups = [
 export function Sidebar() {
   const location = useLocation();
   const { t } = useTranslation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const permissionCodes = useSelector((s: RootState) => s.auth.permissions);
-  const userEmail = useSelector((s: RootState) => s.auth.user?.email) || 'staff@hospital.com';
-  const userRole = useSelector((s: RootState) => s.auth.user?.role) || 'User';
-  
+  const userEmail = useSelector((s: RootState) => s.auth.user?.email) ?? 'staff@hospital.com';
+  const userRole  = useSelector((s: RootState) => s.auth.user?.role)  ?? 'User';
+  const dispatch  = useDispatch();
+  const navigate  = useNavigate();
+
   const canSee = (perm?: string) => {
     if (!perm) return true;
-    if (perm === 'usersArea')
-      return (
-        permissionCodes.includes('user.view') ||
-        permissionCodes.includes('role.manage') ||
-        permissionCodes.includes('user.create')
-      );
-    if (perm === 'patientsArea')
-      return (
-        permissionCodes.includes('patient.view') ||
-        permissionCodes.includes('patient.create') ||
-        permissionCodes.includes('patient.update') ||
-        permissionCodes.includes('patient.merge') ||
-        permissionCodes.includes('patient.delete')
-      );
-    if (perm === 'appointmentsArea')
-      return (
-        permissionCodes.includes('appointment.view') ||
-        permissionCodes.includes('appointment.book') ||
-        permissionCodes.includes('appointment.slots')
-      );
-    if (perm === 'encountersArea')
-      return (
-        permissionCodes.includes('encounter.view') ||
-        permissionCodes.includes('encounter.create') ||
-        permissionCodes.includes('encounter.update')
-      );
-    if (perm === 'billingArea')
-      return (
-        permissionCodes.includes('invoice.view') ||
-        permissionCodes.includes('invoice.create') ||
-        permissionCodes.includes('invoice.edit') ||
-        permissionCodes.includes('payment.record') ||
-        permissionCodes.includes('invoice.refund') ||
-        permissionCodes.includes('refund.view') ||
-        permissionCodes.includes('refund.approve')
-      );
-    if (perm === 'laboratoryArea')
-      return permissionCodes.some((c) => c.startsWith('lab.'));
-    if (perm === 'pharmacyArea')
-      return permissionCodes.some((c) => c.startsWith('pharmacy.'));
-    if (perm === 'doctorsArea')
-      return (
-        permissionCodes.includes('doctor.view') ||
-        permissionCodes.includes('doctor.create') ||
-        permissionCodes.includes('doctor.update') ||
-        permissionCodes.includes('doctor.delete') ||
-        permissionCodes.includes('doctor.schedule.manage')
-      );
-    if (perm === 'dashboardArea')
-      return (
-        permissionCodes.includes('analytics.dashboard') ||
-        permissionCodes.includes('analytics.financial') ||
-        permissionCodes.includes('analytics.clinical')
-      );
-    if (perm === 'inventoryArea')
-      return permissionCodes.some((c) => c.startsWith('inventory.'));
-    if (perm === 'settings.manage')
-      return permissionCodes.includes('settings.manage') || permissionCodes.includes('admin.full');
-    if (perm === 'analytics.reports')
-      return permissionCodes.includes('analytics.reports') || permissionCodes.includes('analytics.dashboard');
-    return permissionCodes.includes(perm);
+    const has = (c: string) => permissionCodes.includes(c);
+    const any = (...cs: string[]) => cs.some(has);
+    const startsWith = (prefix: string) => permissionCodes.some(c => c.startsWith(prefix));
+    switch (perm) {
+      case 'usersArea':        return any('user.view','role.manage','user.create');
+      case 'patientsArea':     return any('patient.view','patient.create','patient.update','patient.merge','patient.delete');
+      case 'appointmentsArea': return any('appointment.view','appointment.book','appointment.slots');
+      case 'encountersArea':   return any('encounter.view','encounter.create','encounter.update');
+      case 'billingArea':      return any('invoice.view','invoice.create','invoice.edit','payment.record','invoice.refund','refund.view','refund.approve');
+      case 'laboratoryArea':   return startsWith('lab.');
+      case 'pharmacyArea':     return startsWith('pharmacy.');
+      case 'doctorsArea':      return any('doctor.view','doctor.create','doctor.update','doctor.delete','doctor.schedule.manage');
+      case 'dashboardArea':    return any('analytics.dashboard','analytics.financial','analytics.clinical');
+      case 'inventoryArea':    return startsWith('inventory.');
+      case 'ipdArea':          return any('ipd.view','ipd.admit','ipd.discharge');
+      case 'settings.manage':  return any('settings.manage','admin.full');
+      case 'analytics.reports':return any('analytics.reports','analytics.dashboard');
+      default:                 return has(perm);
+    }
   };
 
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-
   const handleLogout = async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (refreshToken) {
-      try {
-        await authService.logout(refreshToken);
-      } catch {
-        /* still clear local session */
-      }
-    }
+    const rt = localStorage.getItem('refreshToken');
+    if (rt) { try { await authService.logout(rt); } catch { /* ignore */ } }
     dispatch(logout());
     navigate('/login');
   };
 
+  const initials = userEmail.charAt(0).toUpperCase();
+
   return (
-    <div 
+    <aside
       className={cn(
-        "relative flex h-screen flex-col bg-slate-900 text-slate-300 border-r border-slate-800 transition-all duration-300 ease-in-out shadow-2xl z-40",
-        isCollapsed ? "w-20" : "w-64"
+        'relative flex h-screen flex-col bg-slate-900 border-r border-slate-800/60 transition-[width] duration-300 ease-in-out z-40 shrink-0',
+        collapsed ? 'w-[72px]' : 'w-[260px]'
       )}
     >
+      {/* Collapse toggle */}
       <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/40 hover:bg-primary/90 z-50 transition-transform active:scale-95"
+        onClick={() => setCollapsed(!collapsed)}
+        className="absolute -right-3 top-[72px] z-50 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white shadow-md hover:bg-primary/90 transition-colors"
+        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
-        {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        {collapsed
+          ? <ChevronRight className="h-3.5 w-3.5" />
+          : <ChevronLeft  className="h-3.5 w-3.5" />
+        }
       </button>
 
-      <div className="flex h-20 items-center border-b border-slate-800 px-6 overflow-hidden bg-slate-900/50 backdrop-blur-sm sticky top-0 z-20">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-blue-600 text-white shadow-lg shadow-primary/30">
-            <Activity className="h-6 w-6" />
+      {/* Logo */}
+      <div className="flex h-[60px] shrink-0 items-center border-b border-slate-800/60 px-4 overflow-hidden">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white">
+            <Activity className="h-4.5 w-4.5" />
           </div>
-          {!isCollapsed && (
-            <div className="flex flex-col animate-in fade-in slide-in-from-left-2 duration-300">
-              <h1 className="text-xl font-black text-white tracking-tighter leading-none">
-                MedLedger
-              </h1>
-              <span className="text-[10px] font-bold text-primary uppercase tracking-widest mt-1">
-                Health Infrastructure
-              </span>
+          {!collapsed && (
+            <div className="min-w-0 animate-in fade-in duration-200">
+              <p className="text-sm font-bold text-white leading-none truncate">MedLedger</p>
+              <p className="text-[10px] text-slate-500 mt-0.5 truncate">HMS Platform</p>
             </div>
           )}
         </div>
       </div>
-      
-      <div className="flex-1 overflow-y-auto py-6 custom-scrollbar px-3">
-        {navigationGroups.map((group, idx) => {
-          const visibleItems = group.items.filter(item => canSee(item.permission));
-          if (visibleItems.length === 0) return null;
 
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto custom-scrollbar py-4 px-2 space-y-5">
+        {navigationGroups.map((group, gi) => {
+          const visible = group.items.filter(i => canSee(i.permission));
+          if (!visible.length) return null;
           return (
-            <div key={group.title} className="mb-6">
-              {!isCollapsed ? (
-                <h2 className="mb-3 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 animate-in fade-in duration-500">
+            <div key={group.title}>
+              {!collapsed && (
+                <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
                   {group.title}
-                </h2>
-              ) : idx > 0 && (
-                <div className="mx-auto w-8 border-t border-slate-800 my-4" />
+                </p>
               )}
-              <nav className="space-y-1">
-                {visibleItems.map((item) => {
-                  const isActive = location.pathname.startsWith(item.href);
+              {collapsed && gi > 0 && (
+                <div className="mx-3 mb-3 border-t border-slate-800/60" />
+              )}
+              <ul className="space-y-0.5">
+                {visible.map(item => {
+                  const active = location.pathname === item.href ||
+                    (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
                   return (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      title={isCollapsed ? item.name : undefined}
-                      className={cn(
-                        'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 group relative',
-                        isActive
-                          ? 'bg-primary/10 text-primary shadow-sm'
-                          : 'hover:bg-slate-800/50 hover:text-white'
-                      )}
-                    >
-                      {isActive && (
-                        <div className="absolute left-0 top-2 bottom-2 w-1 bg-primary rounded-r-full shadow-[2px_0_8px_rgba(37,99,235,0.4)]" />
-                      )}
-                      <item.icon className={cn(
-                        "h-5 w-5 shrink-0 transition-all duration-200 group-hover:scale-110",
-                        isActive ? "text-primary drop-shadow-[0_0_8px_rgba(37,99,235,0.3)]" : "text-slate-400 group-hover:text-white"
-                      )} />
-                      {!isCollapsed && (
-                        <span className="animate-in fade-in slide-in-from-left-2 duration-300">
-                          {item.name}
-                        </span>
-                      )}
-                      {isActive && !isCollapsed && (
-                        <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(37,99,235,0.5)]" />
-                      )}
-                    </Link>
+                    <li key={item.name}>
+                      <Link
+                        to={item.href}
+                        title={collapsed ? item.name : undefined}
+                        className={cn(
+                          'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150',
+                          active
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-100'
+                        )}
+                      >
+                        {active && (
+                          <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r-full bg-primary" />
+                        )}
+                        <item.icon className={cn(
+                          'h-4 w-4 shrink-0 transition-colors',
+                          active ? 'text-primary' : 'text-slate-500 group-hover:text-slate-300'
+                        )} />
+                        {!collapsed && (
+                          <span className="truncate animate-in fade-in duration-150">{item.name}</span>
+                        )}
+                      </Link>
+                    </li>
                   );
                 })}
-              </nav>
+              </ul>
             </div>
           );
         })}
-      </div>
-      
-      <div className="border-t border-slate-800 bg-slate-900/80 backdrop-blur-md p-4 space-y-3">
-        {/* User Profile Section */}
+      </nav>
+
+      {/* Footer */}
+      <div className="shrink-0 border-t border-slate-800/60 p-3 space-y-1">
+        {/* User info */}
         <div className={cn(
-          "flex items-center gap-3 p-2 rounded-xl transition-colors duration-200",
-          !isCollapsed && "bg-slate-800/30 border border-slate-800/50"
+          'flex items-center gap-3 rounded-lg px-2 py-2 overflow-hidden',
+          !collapsed && 'bg-slate-800/40'
         )}>
-          <div className="h-10 w-10 shrink-0 rounded-xl bg-slate-800 flex items-center justify-center border border-slate-700 shadow-inner group cursor-pointer hover:border-primary/50 transition-colors">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <span className="text-primary font-black text-sm uppercase">
-                {userEmail.charAt(0)}
-              </span>
-            </div>
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/20 text-primary text-xs font-bold">
+            {initials}
           </div>
-          {!isCollapsed && (
-            <div className="flex flex-col min-w-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <span className="text-sm font-bold text-white truncate leading-none mb-1">
+          {!collapsed && (
+            <div className="min-w-0 animate-in fade-in duration-150">
+              <p className="text-xs font-semibold text-slate-200 truncate leading-none">
                 {userEmail.split('@')[0]}
-              </span>
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">
-                {userRole}
-              </span>
+              </p>
+              <p className="text-[10px] text-slate-500 mt-0.5 truncate">{userRole}</p>
             </div>
           )}
         </div>
 
+        {/* Logout */}
         <button
           onClick={handleLogout}
-          title={isCollapsed ? t('common.logout') : undefined}
-          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-slate-500 hover:bg-rose-500/10 hover:text-rose-500 transition-all duration-200 group relative"
+          title={collapsed ? t('common.logout') : undefined}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
         >
-          <LogOut className="h-5 w-5 shrink-0 transition-transform group-hover:rotate-12 group-hover:translate-x-0.5" />
-          {!isCollapsed && (
-            <span className="animate-in fade-in slide-in-from-left-2 duration-300">
-              {t('common.logout')}
-            </span>
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!collapsed && (
+            <span className="animate-in fade-in duration-150">{t('common.logout')}</span>
           )}
         </button>
       </div>
-    </div>
+    </aside>
   );
 }

@@ -12,23 +12,15 @@ import { CircularProgress, Progress } from '@/components/ui/Progress';
 import { Avatar, AvatarGroup } from '@/components/ui/Avatar';
 import { Alert } from '@/components/ui/Alert';
 import { Tooltip } from '@/components/ui/Tooltip';
-import axios from 'axios';
+import api from '@/lib/api';
 import { auditService } from '@/features/audit/services/auditService';
 import { formatDateTime, formatDate } from '@/lib/utils';
 import { useState } from 'react';
 
 const getDashboardSummary = async () => {
-  const token = localStorage.getItem('accessToken');
-  const tenantId = localStorage.getItem('tenantId');
-  const userId = localStorage.getItem('userId');
-  
-  const response = await axios.get('http://localhost:5003/api/dashboard/summary', {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Tenant-Id': tenantId || '',
-      'X-User-Id': userId || '',
-    },
-  });
+  const response = await api.get(
+    `${import.meta.env.VITE_PATIENT_SERVICE_URL ?? 'http://localhost:5003'}/api/dashboard/summary`
+  );
   return response.data;
 };
 

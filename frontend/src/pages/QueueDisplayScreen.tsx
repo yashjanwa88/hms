@@ -3,184 +3,179 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { queueService } from '@/services/queueService';
 import type { QueueDisplay } from '@/types';
+import { Activity, Clock, Users } from 'lucide-react';
+
+function pad(n: number) { return String(n).padStart(2, '0'); }
 
 export function QueueDisplayScreen() {
   const [searchParams] = useSearchParams();
-  const doctorId = searchParams.get('doctorId') || undefined;
-  const tenantId = searchParams.get('tenantId') || localStorage.getItem('tenantId') || undefined;
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const doctorId = searchParams.get('doctorId') ?? undefined;
+  const tenantId = searchParams.get('tenantId') ?? localStorage.getItem('tenantId') ?? undefined;
+  const [now, setNow] = useState(new Date());
 
-  // Auto-refresh every 5 seconds
   const { data: queueData } = useQuery({
     queryKey: ['queue-display', doctorId, tenantId],
     queryFn: () => queueService.getQueueDisplay(doctorId, tenantId),
-    refetchInterval: 5000, // 5 seconds
+    refetchInterval: 5000,
   });
 
   const queue: QueueDisplay | undefined = queueData?.data;
 
-  // Update clock every second
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
   }, []);
 
+  const timeStr = `${pad(now.getHours() % 12 || 12)}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ${now.getHours() >= 12 ? 'PM' : 'AM'}`;
+  const dateStr = now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-      {/* Header */}
-      <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-800">
-              Patient Queue
-            </h1>
-            <p className="text-xl text-gray-600 mt-2">
-              {queue?.doctorName || 'All Doctors'}
-            </p>
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col select-none overflow-hidden">
+
+      {/* ── Top bar ── */}
+      <header className="flex items-center justify-between px-8 py-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white">
+            <Activity className="h-5 w-5" />
           </div>
-          <div className="text-right">
-            <div className="text-5xl font-bold text-indigo-600">
-              {currentTime.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true 
-              })}
-            </div>
-            <div className="text-xl text-gray-600 mt-1">
-              {currentTime.toLocaleDateString('en-US', { 
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </div>
+          <div>
+            <p className="text-sm font-bold text-white leading-none">MedLedger HMS</p>
+            <p className="text-xs text-slate-400 mt-0.5">{queue?.doctorName ?? 'All Doctors'}</p>
           </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Current Token - Large Display */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
-            <div className="text-2xl text-gray-600 mb-4">NOW SERVING</div>
+        <div className="text-right">
+          <p className="text-2xl font-black text-white tabular-nums">{timeStr}</p>
+          <p className="text-xs text-slate-400 mt-0.5">{dateStr}</p>
+        </div>
+      </header>
+
+      {/* ── Main content ── */}
+      <div className="flex flex-1 overflow-hidden">
+
+        {/* Current + Next — 2/3 width */}
+        <div className="flex flex-col flex-[2] border-r border-slate-800 overflow-hidden">
+
+          {/* NOW SERVING */}
+          <div className="flex flex-1 flex-col items-center justify-center p-10 bg-gradient-to-br from-slate-900 to-slate-950">
+            <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-500 mb-6">
+              Now Serving
+            </p>
+
             {queue?.currentToken ? (
               <>
-                <div className="text-9xl font-bold text-indigo-600 mb-6">
-                  {queue.currentToken.tokenNumber}
-                </div>
-                <div className="text-4xl text-gray-700">
-                  {queue.currentToken.patientName}
-                </div>
-                {queue.currentToken.priority === 2 && (
-                  <div className="mt-4 inline-block bg-red-100 text-red-600 px-6 py-3 rounded-full text-xl font-semibold">
-                    🚨 EMERGENCY
+                <div className="relative flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full bg-primary/10 blur-3xl scale-150" />
+                  <div className="relative flex h-52 w-52 items-center justify-center rounded-full border-4 border-primary/30 bg-primary/5 pulse-ring">
+                    <span className="token-xl text-primary">
+                      {queue.currentToken.tokenNumber}
+                    </span>
                   </div>
+                </div>
+
+                <p className="mt-8 text-3xl font-bold text-white text-center">
+                  {queue.currentToken.patientName}
+                </p>
+
+                {queue.currentToken.priority === 2 && (
+                  <span className="mt-4 status-emergency text-sm px-4 py-1.5">
+                    🚨 Emergency Priority
+                  </span>
                 )}
               </>
             ) : (
-              <div className="text-6xl text-gray-400 py-12">
-                No Patient Currently
+              <div className="flex flex-col items-center gap-4 text-slate-600">
+                <Users className="h-20 w-20 opacity-20" />
+                <p className="text-2xl font-semibold">No Patient Currently</p>
+                <p className="text-sm">Waiting for next token to be called</p>
               </div>
             )}
           </div>
 
-          {/* Next Token */}
+          {/* NEXT */}
           {queue?.nextToken && (
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl shadow-lg p-8 mt-6 text-center">
-              <div className="text-xl text-gray-600 mb-2">NEXT</div>
-              <div className="text-6xl font-bold text-green-600 mb-3">
-                {queue.nextToken.tokenNumber}
+            <div className="flex items-center justify-between px-10 py-5 bg-emerald-950/40 border-t border-emerald-900/40 shrink-0">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-emerald-500 mb-1">Up Next</p>
+                <p className="text-xl font-semibold text-white">{queue.nextToken.patientName}</p>
               </div>
-              <div className="text-2xl text-gray-700">
-                {queue.nextToken.patientName}
-              </div>
+              <span className="token-md text-emerald-400">{queue.nextToken.tokenNumber}</span>
             </div>
           )}
         </div>
 
-        {/* Waiting Queue */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-3xl font-bold text-gray-800">
-                Waiting
-              </h2>
-              <div className="bg-indigo-100 text-indigo-600 px-4 py-2 rounded-full text-2xl font-bold">
-                {queue?.totalWaiting || 0}
-              </div>
+        {/* Waiting list — 1/3 width */}
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/60 shrink-0">
+            <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Waiting</p>
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/20 text-primary text-sm font-bold">
+              {queue?.totalWaiting ?? 0}
+            </span>
+          </div>
+
+          {/* Avg wait */}
+          {(queue?.averageWaitTimeMinutes ?? 0) > 0 && (
+            <div className="flex items-center gap-2 px-6 py-3 bg-amber-950/30 border-b border-amber-900/30 shrink-0">
+              <Clock className="h-3.5 w-3.5 text-amber-400" />
+              <p className="text-xs text-amber-300">
+                Avg wait: <strong>~{Math.round(queue!.averageWaitTimeMinutes)} min</strong>
+              </p>
             </div>
+          )}
 
-            {queue?.averageWaitTimeMinutes !== undefined && queue.averageWaitTimeMinutes > 0 && (
-              <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded">
-                <div className="text-sm text-amber-700">Average Wait Time</div>
-                <div className="text-2xl font-bold text-amber-900">
-                  ~{Math.round(queue.averageWaitTimeMinutes)} mins
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-3 max-h-[600px] overflow-y-auto">
-              {queue?.waitingQueue && queue.waitingQueue.length > 0 ? (
-                queue.waitingQueue.map((token) => (
-                  <div
-                    key={token.tokenNumber}
-                    className={`p-5 rounded-xl border-2 ${
-                      token.priority === 2
-                        ? 'bg-red-50 border-red-300'
-                        : token.priority === 1
-                        ? 'bg-yellow-50 border-yellow-300'
-                        : 'bg-gray-50 border-gray-200'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`text-3xl font-bold ${
-                          token.priority === 2
-                            ? 'text-red-600'
-                            : token.priority === 1
-                            ? 'text-yellow-600'
-                            : 'text-gray-700'
-                        }`}>
-                          {token.tokenNumber}
-                        </div>
-                        <div>
-                          <div className="text-lg font-medium text-gray-800">
-                            {token.patientName}
-                          </div>
-                          {token.priority === 2 && (
-                            <div className="text-xs text-red-600 font-semibold">
-                              EMERGENCY
-                            </div>
-                          )}
-                          {token.priority === 1 && (
-                            <div className="text-xs text-yellow-600 font-semibold">
-                              SENIOR CITIZEN
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {Math.round(token.waitTimeMinutes)}m
-                      </div>
+          {/* List */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2">
+            {queue?.waitingQueue?.length ? (
+              queue.waitingQueue.map((token, i) => (
+                <div
+                  key={token.tokenNumber}
+                  className={`flex items-center justify-between rounded-xl px-4 py-3 border transition-colors ${
+                    token.priority === 2
+                      ? 'bg-red-950/40 border-red-800/50'
+                      : token.priority === 1
+                      ? 'bg-amber-950/30 border-amber-800/40'
+                      : i === 0
+                      ? 'bg-emerald-950/30 border-emerald-800/40'
+                      : 'bg-slate-800/40 border-slate-700/40'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={`token-md shrink-0 ${
+                      token.priority === 2 ? 'text-red-400' :
+                      token.priority === 1 ? 'text-amber-400' :
+                      i === 0 ? 'text-emerald-400' : 'text-slate-300'
+                    }`}>
+                      {token.tokenNumber}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">{token.patientName}</p>
+                      {token.priority === 2 && <p className="text-xs text-red-400 font-semibold">EMERGENCY</p>}
+                      {token.priority === 1 && <p className="text-xs text-amber-400 font-semibold">SENIOR CITIZEN</p>}
+                      {i === 0 && token.priority === 0 && <p className="text-xs text-emerald-400 font-semibold">NEXT</p>}
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-center text-gray-400 py-12 text-xl">
-                  No patients waiting
+                  <span className="text-xs text-slate-500 shrink-0 ml-2">
+                    {Math.round(token.waitTimeMinutes)}m
+                  </span>
                 </div>
-              )}
-            </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-slate-600 gap-3 py-16">
+                <Users className="h-12 w-12 opacity-20" />
+                <p className="text-sm">No patients waiting</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="mt-8 text-center text-gray-600">
-        <p className="text-lg">
-          Thank you for your patience • Please be ready when your number is called
+      {/* ── Footer ── */}
+      <footer className="shrink-0 border-t border-slate-800 bg-slate-900/60 px-8 py-3 text-center">
+        <p className="text-xs text-slate-500">
+          Please be ready when your token number is called • Thank you for your patience
         </p>
-      </div>
+      </footer>
     </div>
   );
 }

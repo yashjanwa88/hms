@@ -74,43 +74,33 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="page-header">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Settings
-          </h1>
-          <p className="text-lg font-medium text-slate-500 dark:text-slate-400 mt-2">
-            Manage hospital configuration and preferences.
-          </p>
+          <h1 className="page-title">Settings</h1>
+          <p className="page-subtitle">Manage hospital configuration, departments, and preferences.</p>
         </div>
       </div>
 
       {/* Settings Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 bg-slate-100 dark:bg-slate-800 p-2 rounded-xl">
-          <TabsTrigger value="hospital" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 rounded-lg">
-            <Building2 className="h-4 w-4 mr-2" />
-            Hospital
+        <TabsList className="flex flex-wrap gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg h-auto">
+          <TabsTrigger value="hospital" className="h-8 rounded-md text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm gap-1.5">
+            <Building2 className="h-3.5 w-3.5" /> Hospital
           </TabsTrigger>
-          <TabsTrigger value="departments" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 rounded-lg">
-            <Users className="h-4 w-4 mr-2" />
-            Departments
+          <TabsTrigger value="departments" className="h-8 rounded-md text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm gap-1.5">
+            <Users className="h-3.5 w-3.5" /> Departments
           </TabsTrigger>
-          <TabsTrigger value="slots" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 rounded-lg">
-            <Clock className="h-4 w-4 mr-2" />
-            Time Slots
+          <TabsTrigger value="slots" className="h-8 rounded-md text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm gap-1.5">
+            <Clock className="h-3.5 w-3.5" /> Time Slots
           </TabsTrigger>
-          <TabsTrigger value="templates" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 rounded-lg">
-            <Bell className="h-4 w-4 mr-2" />
-            Templates
+          <TabsTrigger value="templates" className="h-8 rounded-md text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm gap-1.5">
+            <Bell className="h-3.5 w-3.5" /> Templates
           </TabsTrigger>
-          <TabsTrigger value="users" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 rounded-lg">
-            <Users className="h-4 w-4 mr-2" />
-            Users
+          <TabsTrigger value="users" className="h-8 rounded-md text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm gap-1.5">
+            <Users className="h-3.5 w-3.5" /> Users
           </TabsTrigger>
-          <TabsTrigger value="backup" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 rounded-lg">
-            <Database className="h-4 w-4 mr-2" />
-            Backup
+          <TabsTrigger value="backup" className="h-8 rounded-md text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm gap-1.5">
+            <Database className="h-3.5 w-3.5" /> Backup
           </TabsTrigger>
         </TabsList>
 
