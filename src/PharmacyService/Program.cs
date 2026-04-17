@@ -29,18 +29,40 @@ builder.Services.AddDigitalHospitalJwtAuthentication(builder.Configuration, o =>
 builder.Services.AddDigitalHospitalPermissionAuthorization();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 
+// Redis — optional; fall back to a no-op multiplexer so DI never fails
 var redisConnectionString = builder.Configuration["Redis:ConnectionString"];
-if (!string.IsNullOrEmpty(redisConnectionString))
+IConnectionMultiplexer redisMultiplexer;
+try
 {
-    try { builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnectionString)); }
-    catch { Log.Warning("Redis unavailable. Continuing without Redis."); }
+    redisMultiplexer = ConnectionMultiplexer.Connect(redisConnectionString ?? "localhost:6379");
+    builder.Services.AddSingleton<IConnectionMultiplexer>(redisMultiplexer);
+    Log.Information("Redis connected.");
+}
+catch
+{
+    Log.Warning("Redis unavailable. Continuing without Redis.");
+    builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+        ConnectionMultiplexer.Connect("localhost:6379,abortConnect=false"));
 }
 
+// RabbitMQ — optional; fall back to NoOpEventBus so DI never fails
 var rabbitMQHost = builder.Configuration["RabbitMQ:Host"];
-if (!string.IsNullOrEmpty(rabbitMQHost))
+try
 {
-    try { builder.Services.AddSingleton<IEventBus>(new RabbitMQEventBus(rabbitMQHost)); }
-    catch { Log.Warning("RabbitMQ unavailable. Continuing without RabbitMQ."); }
+    if (!string.IsNullOrEmpty(rabbitMQHost))
+    {
+        builder.Services.AddSingleton<IEventBus>(new RabbitMQEventBus(rabbitMQHost));
+        Log.Information("RabbitMQ connected.");
+    }
+    else
+    {
+        builder.Services.AddSingleton<IEventBus>(new NoOpEventBus());
+    }
+}
+catch
+{
+    Log.Warning("RabbitMQ unavailable. Continuing without RabbitMQ.");
+    builder.Services.AddSingleton<IEventBus>(new NoOpEventBus());
 }
 
 builder.Services.AddScoped<IDrugRepository, DrugRepository>();
@@ -124,6 +146,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseSerilogRequestLogging();
+
+app.UseMiddleware<Shared.Common.Middleware.ExceptionHandlingMiddleware>();
 
 app.UseCors("AllowAll");
 

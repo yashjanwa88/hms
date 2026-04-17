@@ -5,288 +5,269 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { toast } from 'sonner';
-import { pharmacyService } from '../services/pharmacyService';
-import { Plus, Package, Edit, Eye } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import pharmacyService, { Drug, CreateDrugRequest, CreateBatchRequest } from '../services/pharmacyService';
+import {
+  Plus, Search, Package, X, RefreshCw,
+  AlertTriangle, CheckCircle2, Pill
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-interface Drug {
-  id: string;
-  drugCode: string;
-  drugName: string;
-  genericName: string;
-  category: string;
-  manufacturer: string;
-  strength: string;
-  dosageForm: string;
-  unitPrice: number;
-  reorderLevel: number;
-  availableStock: number;
-  isControlled: boolean;
-  requiresPrescription: boolean;
-  isActive: boolean;
-}
+const selectCls = 'h-9 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30';
+
+const DOSAGE_FORMS = ['Tablet', 'Capsule', 'Syrup', 'Injection', 'Cream', 'Drops', 'Inhaler', 'Patch', 'Suppository'];
+
+const EMPTY_DRUG: CreateDrugRequest = {
+  drugCode: '', drugName: '', genericName: '', category: '',
+  manufacturer: '', strength: '', dosageForm: 'Tablet',
+  unitPrice: 0, reorderLevel: 10, isControlled: false, requiresPrescription: true,
+};
+
+const EMPTY_BATCH: CreateBatchRequest = {
+  drugId: '', batchNumber: '', manufactureDate: '', expiryDate: '',
+  quantity: 0, costPrice: 0, sellingPrice: 0, supplier: '',
+};
 
 export function DrugManagementPage() {
-  const [showModal, setShowModal] = useState(false);
+  const [search, setSearch]             = useState('');
+  const [showDrugModal, setShowDrugModal]   = useState(false);
   const [showBatchModal, setShowBatchModal] = useState(false);
-  const [selectedDrugId, setSelectedDrugId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const [drugForm, setDrugForm]         = useState(EMPTY_DRUG);
+  const [batchForm, setBatchForm]       = useState(EMPTY_BATCH);
+  const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
+  const qc = useQueryClient();
 
-  const [drugForm, setDrugForm] = useState({
-    drugCode: '',
-    drugName: '',
-    genericName: '',
-    category: '',
-    manufacturer: '',
-    strength: '',
-    dosageForm: 'Tablet',
-    unitPrice: 0,
-    reorderLevel: 10,
-    isControlled: false,
-    requiresPrescription: true,
-  });
-
-  const [batchForm, setBatchForm] = useState({
-    drugId: '',
-    batchNumber: '',
-    manufactureDate: '',
-    expiryDate: '',
-    quantity: 0,
-    costPrice: 0,
-    sellingPrice: 0,
-    supplier: '',
-  });
-
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['drugs'],
-    queryFn: () => pharmacyService.getDrugs(),
+    queryFn: pharmacyService.getDrugs,
   });
 
-  const drugs = (data?.data || []) as Drug[];
-  const filteredDrugs = drugs.filter(d => 
-    d.drugName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.genericName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.drugCode.toLowerCase().includes(searchTerm.toLowerCase())
+  const drugs: Drug[] = data?.data ?? [];
+  const filtered = drugs.filter(d =>
+    d.drugName.toLowerCase().includes(search.toLowerCase()) ||
+    d.genericName.toLowerCase().includes(search.toLowerCase()) ||
+    d.drugCode.toLowerCase().includes(search.toLowerCase()) ||
+    d.category.toLowerCase().includes(search.toLowerCase())
   );
 
-  const createDrugMutation = useMutation({
-    mutationFn: (data: typeof drugForm) => pharmacyService.createDrug(data),
-    onSuccess: () => {
-      toast.success('Drug added successfully');
-      setShowModal(false);
-      resetDrugForm();
-      queryClient.invalidateQueries({ queryKey: ['drugs'] });
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to add drug');
-    },
+  const createDrug = useMutation({
+    mutationFn: (d: CreateDrugRequest) => pharmacyService.createDrug(d),
+    onSuccess: () => { toast.success('Drug added'); setShowDrugModal(false); setDrugForm(EMPTY_DRUG); qc.invalidateQueries({ queryKey: ['drugs'] }); },
+    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Failed to add drug'),
   });
 
-  const createBatchMutation = useMutation({
-    mutationFn: (data: typeof batchForm) => pharmacyService.createBatch(data),
-    onSuccess: () => {
-      toast.success('Batch added successfully');
-      setShowBatchModal(false);
-      resetBatchForm();
-      queryClient.invalidateQueries({ queryKey: ['drugs'] });
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to add batch');
-    },
+  const createBatch = useMutation({
+    mutationFn: (d: CreateBatchRequest) => pharmacyService.createBatch(d),
+    onSuccess: () => { toast.success('Batch added'); setShowBatchModal(false); setBatchForm(EMPTY_BATCH); qc.invalidateQueries({ queryKey: ['drugs'] }); },
+    onError: (e: any) => toast.error(e.response?.data?.message ?? 'Failed to add batch'),
   });
 
-  const resetDrugForm = () => {
-    setDrugForm({
-      drugCode: '',
-      drugName: '',
-      genericName: '',
-      category: '',
-      manufacturer: '',
-      strength: '',
-      dosageForm: 'Tablet',
-      unitPrice: 0,
-      reorderLevel: 10,
-      isControlled: false,
-      requiresPrescription: true,
-    });
-  };
-
-  const resetBatchForm = () => {
-    setBatchForm({
-      drugId: '',
-      batchNumber: '',
-      manufactureDate: '',
-      expiryDate: '',
-      quantity: 0,
-      costPrice: 0,
-      sellingPrice: 0,
-      supplier: '',
-    });
-  };
-
-  const openAddBatchModal = (drugId: string) => {
-    setBatchForm({ ...batchForm, drugId });
+  const openBatchModal = (drug: Drug) => {
+    setSelectedDrug(drug);
+    setBatchForm({ ...EMPTY_BATCH, drugId: drug.id });
     setShowBatchModal(true);
   };
 
+  const totalDrugs   = drugs.length;
+  const activeDrugs  = drugs.filter(d => d.isActive).length;
+  const lowStock     = drugs.filter(d => d.availableStock < d.reorderLevel).length;
+  const outOfStock   = drugs.filter(d => d.availableStock === 0).length;
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Drug Management</h1>
-        <Button onClick={() => setShowModal(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Drug
-        </Button>
+    <div className="page-section">
+
+      {/* Header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Drug Management</h1>
+          <p className="page-subtitle">Manage drug formulary, batches, and stock levels.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => refetch()} disabled={isFetching}>
+            <RefreshCw className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')} /> Refresh
+          </Button>
+          <Button size="sm" className="gap-1.5 shadow-md shadow-primary/20" onClick={() => setShowDrugModal(true)}>
+            <Plus className="h-4 w-4" /> Add Drug
+          </Button>
+        </div>
       </div>
 
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Drugs',  value: totalDrugs,  icon: Pill,          color: 'stat-blue',  text: 'text-blue-600'    },
+          { label: 'Active',       value: activeDrugs, icon: CheckCircle2,  color: 'stat-green', text: 'text-emerald-600' },
+          { label: 'Low Stock',    value: lowStock,    icon: AlertTriangle, color: 'stat-amber', text: 'text-amber-600'   },
+          { label: 'Out of Stock', value: outOfStock,  icon: Package,       color: 'stat-rose',  text: 'text-rose-600'    },
+        ].map(s => (
+          <Card key={s.label} className={s.color}>
+            <CardContent className="pt-5 pb-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{s.label}</p>
+                <s.icon className={`h-4 w-4 ${s.text}`} />
+              </div>
+              <p className={`text-3xl font-black ${s.text}`}>{s.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+        <Input value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Search by name, code, category…" className="pl-9 h-9 text-sm" />
+      </div>
+
+      {/* Table */}
       <Card>
-        <CardHeader>
-          <div className="flex gap-4">
-            <Input
-              type="text"
-              placeholder="Search drugs by name, code, or generic name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1"
-            />
-          </div>
+        <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <Pill className="h-4 w-4 text-primary" />
+            Drug Formulary
+            <span className="ml-auto text-xs font-normal text-slate-400">{filtered.length} records</span>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
-            <div className="text-center py-8">Loading...</div>
+            <div className="p-4 space-y-2">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="skeleton h-10 rounded-lg" />)}</div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-400">
+              <Pill className="h-12 w-12 opacity-20" />
+              <p className="text-sm font-medium">{search ? 'No drugs match your search' : 'No drugs added yet'}</p>
+              {!search && <Button size="sm" onClick={() => setShowDrugModal(true)}>Add First Drug</Button>}
+            </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="data-table">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2">Code</th>
-                    <th className="text-left p-2">Drug Name</th>
-                    <th className="text-left p-2">Generic Name</th>
-                    <th className="text-left p-2">Category</th>
-                    <th className="text-left p-2">Strength</th>
-                    <th className="text-right p-2">Price</th>
-                    <th className="text-right p-2">Stock</th>
-                    <th className="text-center p-2">Status</th>
-                    <th className="text-center p-2">Actions</th>
+                  <tr>
+                    <th>Code</th>
+                    <th>Drug Name</th>
+                    <th>Generic</th>
+                    <th>Category</th>
+                    <th>Strength / Form</th>
+                    <th className="text-right">Price</th>
+                    <th className="text-right">Stock</th>
+                    <th className="text-center">Status</th>
+                    <th className="text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredDrugs.map((drug) => (
-                    <tr key={drug.id} className="border-b hover:bg-gray-50">
-                      <td className="p-2 font-mono text-sm">{drug.drugCode}</td>
-                      <td className="p-2 font-medium">{drug.drugName}</td>
-                      <td className="p-2 text-sm text-gray-600">{drug.genericName}</td>
-                      <td className="p-2 text-sm">{drug.category}</td>
-                      <td className="p-2 text-sm">{drug.strength} {drug.dosageForm}</td>
-                      <td className="p-2 text-right">₹{drug.unitPrice.toFixed(2)}</td>
-                      <td className="p-2 text-right">
-                        <span className={drug.availableStock < drug.reorderLevel ? 'text-red-600 font-bold' : ''}>
-                          {drug.availableStock}
-                        </span>
-                      </td>
-                      <td className="p-2 text-center">
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          drug.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {drug.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td className="p-2 text-center">
-                        <div className="flex justify-center gap-1">
-                          <Button size="sm" variant="ghost" onClick={() => openAddBatchModal(drug.id)}>
-                            <Package className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {filtered.map(d => {
+                    const isLow = d.availableStock < d.reorderLevel;
+                    const isOut = d.availableStock === 0;
+                    return (
+                      <tr key={d.id}>
+                        <td className="font-mono text-xs font-semibold text-primary">{d.drugCode}</td>
+                        <td>
+                          <div>
+                            <p className="font-semibold text-sm text-slate-900 dark:text-white">{d.drugName}</p>
+                            <div className="flex gap-1 mt-0.5">
+                              {d.isControlled && <span className="status-pill bg-amber-50 text-amber-700 text-[9px]">Controlled</span>}
+                              {d.requiresPrescription && <span className="status-pill bg-blue-50 text-blue-700 text-[9px]">Rx</span>}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="text-slate-500 text-sm">{d.genericName}</td>
+                        <td className="text-slate-500 text-sm">{d.category}</td>
+                        <td className="text-sm">{d.strength} · {d.dosageForm}</td>
+                        <td className="text-right font-semibold text-sm">₹{d.unitPrice.toFixed(2)}</td>
+                        <td className="text-right">
+                          <div className="flex flex-col items-end gap-1">
+                            <span className={cn('text-sm font-bold', isOut ? 'text-rose-600' : isLow ? 'text-amber-600' : 'text-slate-900 dark:text-white')}>
+                              {d.availableStock}
+                            </span>
+                            <div className="w-16 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                              <div className={cn('h-full rounded-full', isOut ? 'bg-rose-500' : isLow ? 'bg-amber-500' : 'bg-emerald-500')}
+                                style={{ width: `${Math.min((d.availableStock / Math.max(d.reorderLevel * 2, 1)) * 100, 100)}%` }} />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="text-center">
+                          <span className={d.isActive ? 'status-active' : 'status-inactive'}>{d.isActive ? 'Active' : 'Inactive'}</span>
+                        </td>
+                        <td className="text-center">
+                          <button className="icon-btn" title="Add Batch" onClick={() => openBatchModal(d)}>
+                            <Package className="h-3.5 w-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
-              {filteredDrugs.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  {searchTerm ? 'No drugs found matching your search' : 'No drugs available. Add your first drug!'}
-                </div>
-              )}
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Add Drug Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto">
-          <Card className="w-[600px] max-h-[90vh] overflow-y-auto my-8">
-            <CardHeader>
-              <CardTitle>Add New Drug</CardTitle>
+      {showDrugModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-150">
+          <Card className="w-full max-w-xl shadow-2xl animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+            <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4 sticky top-0 bg-white dark:bg-slate-900 z-10">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold">Add New Drug</CardTitle>
+                <button className="icon-btn" onClick={() => { setShowDrugModal(false); setDrugForm(EMPTY_DRUG); }}><X className="h-4 w-4" /></button>
+              </div>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={(e) => { e.preventDefault(); createDrugMutation.mutate(drugForm); }} className="space-y-4">
+            <CardContent className="pt-5">
+              <form onSubmit={e => { e.preventDefault(); createDrug.mutate(drugForm); }} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Drug Code *</Label>
-                    <Input required value={drugForm.drugCode} onChange={(e) => setDrugForm({...drugForm, drugCode: e.target.value})} />
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-500">Drug Code *</Label>
+                    <Input className="h-9 text-sm" required value={drugForm.drugCode} onChange={e => setDrugForm({ ...drugForm, drugCode: e.target.value })} placeholder="e.g. PARA500" />
                   </div>
-                  <div>
-                    <Label>Category *</Label>
-                    <Input required value={drugForm.category} onChange={(e) => setDrugForm({...drugForm, category: e.target.value})} placeholder="e.g., Antibiotic" />
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-500">Category *</Label>
+                    <Input className="h-9 text-sm" required value={drugForm.category} onChange={e => setDrugForm({ ...drugForm, category: e.target.value })} placeholder="e.g. Antibiotic" />
                   </div>
-                </div>
-                <div>
-                  <Label>Drug Name *</Label>
-                  <Input required value={drugForm.drugName} onChange={(e) => setDrugForm({...drugForm, drugName: e.target.value})} />
-                </div>
-                <div>
-                  <Label>Generic Name *</Label>
-                  <Input required value={drugForm.genericName} onChange={(e) => setDrugForm({...drugForm, genericName: e.target.value})} />
-                </div>
-                <div>
-                  <Label>Manufacturer *</Label>
-                  <Input required value={drugForm.manufacturer} onChange={(e) => setDrugForm({...drugForm, manufacturer: e.target.value})} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Strength *</Label>
-                    <Input required value={drugForm.strength} onChange={(e) => setDrugForm({...drugForm, strength: e.target.value})} placeholder="e.g., 500mg" />
+                  <div className="space-y-1 col-span-2">
+                    <Label className="text-xs font-semibold text-slate-500">Drug Name *</Label>
+                    <Input className="h-9 text-sm" required value={drugForm.drugName} onChange={e => setDrugForm({ ...drugForm, drugName: e.target.value })} />
                   </div>
-                  <div>
-                    <Label>Dosage Form *</Label>
-                    <select className="w-full border rounded px-3 py-2" required value={drugForm.dosageForm} onChange={(e) => setDrugForm({...drugForm, dosageForm: e.target.value})}>
-                      <option value="Tablet">Tablet</option>
-                      <option value="Capsule">Capsule</option>
-                      <option value="Syrup">Syrup</option>
-                      <option value="Injection">Injection</option>
-                      <option value="Cream">Cream</option>
-                      <option value="Drops">Drops</option>
+                  <div className="space-y-1 col-span-2">
+                    <Label className="text-xs font-semibold text-slate-500">Generic Name *</Label>
+                    <Input className="h-9 text-sm" required value={drugForm.genericName} onChange={e => setDrugForm({ ...drugForm, genericName: e.target.value })} />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <Label className="text-xs font-semibold text-slate-500">Manufacturer *</Label>
+                    <Input className="h-9 text-sm" required value={drugForm.manufacturer} onChange={e => setDrugForm({ ...drugForm, manufacturer: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-500">Strength *</Label>
+                    <Input className="h-9 text-sm" required value={drugForm.strength} onChange={e => setDrugForm({ ...drugForm, strength: e.target.value })} placeholder="e.g. 500mg" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-500">Dosage Form *</Label>
+                    <select className={selectCls} value={drugForm.dosageForm} onChange={e => setDrugForm({ ...drugForm, dosageForm: e.target.value })}>
+                      {DOSAGE_FORMS.map(f => <option key={f}>{f}</option>)}
                     </select>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Unit Price (₹) *</Label>
-                    <Input type="number" step="0.01" required value={drugForm.unitPrice} onChange={(e) => setDrugForm({...drugForm, unitPrice: Number(e.target.value)})} />
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-500">Unit Price (₹) *</Label>
+                    <Input className="h-9 text-sm" type="number" step="0.01" min="0" required value={drugForm.unitPrice} onChange={e => setDrugForm({ ...drugForm, unitPrice: Number(e.target.value) })} />
                   </div>
-                  <div>
-                    <Label>Reorder Level *</Label>
-                    <Input type="number" required value={drugForm.reorderLevel} onChange={(e) => setDrugForm({...drugForm, reorderLevel: Number(e.target.value)})} />
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-500">Reorder Level *</Label>
+                    <Input className="h-9 text-sm" type="number" min="0" required value={drugForm.reorderLevel} onChange={e => setDrugForm({ ...drugForm, reorderLevel: Number(e.target.value) })} />
                   </div>
                 </div>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={drugForm.isControlled} onChange={(e) => setDrugForm({...drugForm, isControlled: e.target.checked})} />
-                    <span className="text-sm">Controlled Drug</span>
+                <div className="flex gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-primary" checked={drugForm.isControlled} onChange={e => setDrugForm({ ...drugForm, isControlled: e.target.checked })} />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Controlled Drug</span>
                   </label>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={drugForm.requiresPrescription} onChange={(e) => setDrugForm({...drugForm, requiresPrescription: e.target.checked})} />
-                    <span className="text-sm">Requires Prescription</span>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-primary" checked={drugForm.requiresPrescription} onChange={e => setDrugForm({ ...drugForm, requiresPrescription: e.target.checked })} />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Requires Prescription</span>
                   </label>
                 </div>
-                <div className="flex gap-2">
-                  <Button type="submit" disabled={createDrugMutation.isPending}>
-                    {createDrugMutation.isPending ? 'Adding...' : 'Add Drug'}
+                <div className="flex gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <Button type="submit" size="sm" className="flex-1 shadow-md shadow-primary/20" disabled={createDrug.isPending}>
+                    {createDrug.isPending ? 'Adding…' : 'Add Drug'}
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => { setShowModal(false); resetDrugForm(); }}>Cancel</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setShowDrugModal(false); setDrugForm(EMPTY_DRUG); }}>Cancel</Button>
                 </div>
               </form>
             </CardContent>
@@ -295,51 +276,55 @@ export function DrugManagementPage() {
       )}
 
       {/* Add Batch Modal */}
-      {showBatchModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-[500px]">
-            <CardHeader>
-              <CardTitle>Add Stock Batch</CardTitle>
+      {showBatchModal && selectedDrug && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-150">
+          <Card className="w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-150">
+            <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-base font-semibold">Add Stock Batch</CardTitle>
+                  <p className="text-xs text-slate-500 mt-0.5">{selectedDrug.drugName} · {selectedDrug.strength}</p>
+                </div>
+                <button className="icon-btn" onClick={() => { setShowBatchModal(false); setBatchForm(EMPTY_BATCH); }}><X className="h-4 w-4" /></button>
+              </div>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={(e) => { e.preventDefault(); createBatchMutation.mutate(batchForm); }} className="space-y-4">
-                <div>
-                  <Label>Batch Number *</Label>
-                  <Input required value={batchForm.batchNumber} onChange={(e) => setBatchForm({...batchForm, batchNumber: e.target.value})} />
+            <CardContent className="pt-5">
+              <form onSubmit={e => { e.preventDefault(); createBatch.mutate(batchForm); }} className="space-y-4">
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-slate-500">Batch Number *</Label>
+                  <Input className="h-9 text-sm" required value={batchForm.batchNumber} onChange={e => setBatchForm({ ...batchForm, batchNumber: e.target.value })} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Manufacture Date *</Label>
-                    <Input type="date" required value={batchForm.manufactureDate} onChange={(e) => setBatchForm({...batchForm, manufactureDate: e.target.value})} />
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-500">Manufacture Date *</Label>
+                    <Input className="h-9 text-sm" type="date" required value={batchForm.manufactureDate} onChange={e => setBatchForm({ ...batchForm, manufactureDate: e.target.value })} />
                   </div>
-                  <div>
-                    <Label>Expiry Date *</Label>
-                    <Input type="date" required value={batchForm.expiryDate} onChange={(e) => setBatchForm({...batchForm, expiryDate: e.target.value})} />
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-500">Expiry Date *</Label>
+                    <Input className="h-9 text-sm" type="date" required value={batchForm.expiryDate} onChange={e => setBatchForm({ ...batchForm, expiryDate: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-500">Quantity *</Label>
+                    <Input className="h-9 text-sm" type="number" min="1" required value={batchForm.quantity} onChange={e => setBatchForm({ ...batchForm, quantity: Number(e.target.value) })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-500">Supplier</Label>
+                    <Input className="h-9 text-sm" value={batchForm.supplier} onChange={e => setBatchForm({ ...batchForm, supplier: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-500">Cost Price (₹) *</Label>
+                    <Input className="h-9 text-sm" type="number" step="0.01" min="0" required value={batchForm.costPrice} onChange={e => setBatchForm({ ...batchForm, costPrice: Number(e.target.value) })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-500">Selling Price (₹) *</Label>
+                    <Input className="h-9 text-sm" type="number" step="0.01" min="0" required value={batchForm.sellingPrice} onChange={e => setBatchForm({ ...batchForm, sellingPrice: Number(e.target.value) })} />
                   </div>
                 </div>
-                <div>
-                  <Label>Quantity *</Label>
-                  <Input type="number" required value={batchForm.quantity} onChange={(e) => setBatchForm({...batchForm, quantity: Number(e.target.value)})} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Cost Price (₹) *</Label>
-                    <Input type="number" step="0.01" required value={batchForm.costPrice} onChange={(e) => setBatchForm({...batchForm, costPrice: Number(e.target.value)})} />
-                  </div>
-                  <div>
-                    <Label>Selling Price (₹) *</Label>
-                    <Input type="number" step="0.01" required value={batchForm.sellingPrice} onChange={(e) => setBatchForm({...batchForm, sellingPrice: Number(e.target.value)})} />
-                  </div>
-                </div>
-                <div>
-                  <Label>Supplier</Label>
-                  <Input value={batchForm.supplier} onChange={(e) => setBatchForm({...batchForm, supplier: e.target.value})} />
-                </div>
-                <div className="flex gap-2">
-                  <Button type="submit" disabled={createBatchMutation.isPending}>
-                    {createBatchMutation.isPending ? 'Adding...' : 'Add Batch'}
+                <div className="flex gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <Button type="submit" size="sm" className="flex-1 shadow-md shadow-primary/20" disabled={createBatch.isPending}>
+                    {createBatch.isPending ? 'Adding…' : 'Add Batch'}
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => { setShowBatchModal(false); resetBatchForm(); }}>Cancel</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setShowBatchModal(false); setBatchForm(EMPTY_BATCH); }}>Cancel</Button>
                 </div>
               </form>
             </CardContent>

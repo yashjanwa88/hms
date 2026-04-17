@@ -35,7 +35,7 @@ public class PharmacyAppService : IPharmacyAppService
     private readonly IPrescriptionItemRepository _itemRepo;
     private readonly IDispenseLogRepository _dispenseLogRepo;
     private readonly IEventBus _eventBus;
-    private readonly IDatabase _redis;
+    private readonly IDatabase? _redis;
     private readonly ILogger<PharmacyAppService> _logger;
 
     public PharmacyAppService(
@@ -54,8 +54,8 @@ public class PharmacyAppService : IPharmacyAppService
         _itemRepo = itemRepo;
         _dispenseLogRepo = dispenseLogRepo;
         _eventBus = eventBus;
-        _redis = redis.GetDatabase();
         _logger = logger;
+        try { _redis = redis.GetDatabase(); } catch { _redis = null; }
     }
 
     public async Task<ApiResponse<DrugResponse>> CreateDrugAsync(CreateDrugRequest request, Guid tenantId, string userId)
@@ -94,12 +94,14 @@ public class PharmacyAppService : IPharmacyAppService
     public async Task<ApiResponse<List<DrugResponse>>> GetDrugsAsync(Guid tenantId)
     {
         var cacheKey = $"pharmacy:drugs:{tenantId}";
-        var cached = await _redis.StringGetAsync(cacheKey);
-        
-        if (cached.HasValue)
+        if (_redis != null)
         {
-            var cachedData = JsonSerializer.Deserialize<List<DrugResponse>>(cached!);
-            return ApiResponse<List<DrugResponse>>.SuccessResponse(cachedData!);
+            var cached = await _redis.StringGetAsync(cacheKey);
+            if (cached.HasValue)
+            {
+                var cachedData = JsonSerializer.Deserialize<List<DrugResponse>>(cached!);
+                return ApiResponse<List<DrugResponse>>.SuccessResponse(cachedData!);
+            }
         }
 
         var drugs = await _drugRepo.GetAllAsync(tenantId);
@@ -127,7 +129,8 @@ public class PharmacyAppService : IPharmacyAppService
             });
         }
 
-        await _redis.StringSetAsync(cacheKey, JsonSerializer.Serialize(responses), TimeSpan.FromMinutes(30));
+        if (_redis != null)
+            await _redis.StringSetAsync(cacheKey, JsonSerializer.Serialize(responses), TimeSpan.FromMinutes(30));
         return ApiResponse<List<DrugResponse>>.SuccessResponse(responses);
     }
 
@@ -622,6 +625,7 @@ public class PharmacyAppService : IPharmacyAppService
 
     private async Task InvalidateDrugsCacheAsync(Guid tenantId)
     {
+        if (_redis == null) return;
         var cacheKey = $"pharmacy:drugs:{tenantId}";
         await _redis.KeyDeleteAsync(cacheKey);
     }
